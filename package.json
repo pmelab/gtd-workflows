@@ -7,10 +7,12 @@
     "test:watch": "vitest",
     "typecheck": "tsc",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "build": "bin/gtd-wf build"
   },
   "dependencies": {
-    "effect": "^3.19.15"
+    "effect": "^3.19.15",
+    "esbuild": "^0.28.0"
   },
   "devDependencies": {
     "@pmelab/gtd": "file:../gtd",

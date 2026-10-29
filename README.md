@@ -21,6 +21,7 @@ run gtd's engine from its sources, which import the built web client.
 gtd-wf eject <name> [--gtd <path>]  # copy gtd's shipped workflows into workflows/<name>
 gtd-wf new <name> --from <name>     # start a workflow as a copy of another
 gtd-wf pin [ref]                    # check out ref (default HEAD) in the pinned checkout
+gtd-wf build                        # bundle every workflow into dist/
 gtd-wf status                       # the pin, its workflows, the gtd they were ejected from
 gtd-wf config <name>                # print a gtd.config.ts using the pinned workflow
 ```
@@ -33,7 +34,7 @@ records the gtd version and commit in `workflows/<name>/EJECTED.json`.
 ## Using a workflow
 
 Repositories never import from this working copy. They import from a separate
-checkout of this repository, pinned at a commit: `~/.config/gtd/pinned`
+checkout of this repository, pinned at a commit: `~/.local/share/gtd/workflows`
 (override with `$GTD_WF_PINNED`).
 
 ```sh
@@ -41,6 +42,11 @@ git commit -am "feat(simple): …"
 gtd-wf pin            # pin the commit just made
 gtd-wf config simple > ~/Code/some-repo/gtd.config.ts
 ```
+
+`pin` installs the pinned commit's dependencies and bundles each workflow into
+`dist/<name>.mjs` there; `config` imports that bundle. gtd transpiles a config's
+TypeScript imports on every call (about 1.4s for a whole workflow); the bundle
+loads in about 0.2s more than gtd's shipped workflows.
 
 Editing here changes nothing a running process sees until the next `pin`.
 `gtd-wf pin <ref>` moves back to any earlier commit.
@@ -51,8 +57,8 @@ Editing here changes nothing a running process sees until the next `pin`.
 - **A workflow is tied to the gtd it was ejected from.** Upgrading gtd can break
   it; run the tests after every gtd upgrade (`EJECTED.json` says which version
   it started from).
-- The pinned checkout installs only runtime dependencies (`effect`). gtd itself
-  is never installed there: the running gtd serves every `@pmelab/gtd/*` import.
+- The pinned checkout installs only `effect` and `esbuild`. gtd itself is never
+  installed there: the running gtd serves every `@pmelab/gtd/*` import.
 
 ## Testing
 

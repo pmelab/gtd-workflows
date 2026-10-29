@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process"
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   realpathSync,
@@ -16,7 +17,7 @@ import { dirname, join, relative, resolve, sep } from "node:path"
 
 const REPO = resolve(realpathSync(import.meta.dirname), "..")
 const WORKFLOWS = join(REPO, "workflows")
-const PINNED = process.env.GTD_WF_PINNED ?? join(homedir(), ".config", "gtd", "pinned")
+const PINNED = process.env.GTD_WF_PINNED ?? join(homedir(), ".local", "share", "gtd", "workflows")
 
 // gtd units a workflow may import at runtime: the package exports them, and
 // the running gtd serves its own copy to every config.
@@ -101,12 +102,36 @@ const copy = (name, from) => {
   console.log(`copied ${from} to ${relative(REPO, dest)}`)
 }
 
+// gtd transpiles a config's TypeScript imports on every call — over a second
+// for a whole workflow. A bundle, with gtd and effect left to resolve at
+// runtime, is what repositories import instead.
+const build = () => {
+  for (const name of workflows(REPO)) {
+    execFileSync(
+      join(REPO, "node_modules", ".bin", "esbuild"),
+      [
+        join("workflows", name, "index.ts"),
+        "--bundle",
+        "--format=esm",
+        "--platform=node",
+        "--external:@pmelab/gtd/*",
+        "--external:effect",
+        `--outfile=${join("dist", `${name}.mjs`)}`,
+        "--log-level=warning",
+      ],
+      { cwd: REPO, stdio: "inherit" },
+    )
+  }
+  console.log(`built ${workflows(REPO).join(", ")} into ${join(REPO, "dist")}`)
+}
+
 const pin = (ref = "HEAD") => {
   const commit = git(REPO, "rev-parse", "--verify", `${ref}^{commit}`)
   if (!existsSync(PINNED)) {
-    execFileSync("git", ["clone", "--quiet", "--no-checkout", REPO, PINNED], { stdio: "inherit" })
+    mkdirSync(dirname(PINNED), { recursive: true })
+    execFileSync("git", ["clone", "--quiet", REPO, PINNED], { stdio: "inherit" })
   } else {
-    git(PINNED, "fetch", "--quiet", "origin")
+    git(PINNED, "fetch", "--quiet", "--tags", "origin")
   }
   if (git(PINNED, "status", "--porcelain") !== "") die(`${PINNED} has local changes`)
   const before = existsSync(join(PINNED, "package-lock.json"))
@@ -115,12 +140,14 @@ const pin = (ref = "HEAD") => {
   git(PINNED, "checkout", "--quiet", "--detach", commit)
   const lock = readFileSync(join(PINNED, "package-lock.json"), "utf8")
   if (lock !== before || !existsSync(join(PINNED, "node_modules"))) {
-    // Runtime dependencies only: gtd itself is served by the running gtd.
-    execFileSync("npm", ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], {
+    // Runtime and build dependencies only: gtd itself is served by the running gtd.
+    execFileSync("npm", ["ci", "--omit=dev", "--no-audit", "--no-fund"], {
       cwd: PINNED,
       stdio: "inherit",
     })
   }
+  // The pinned commit's own gtd-wf: it knows how that commit builds.
+  execFileSync(join(PINNED, "bin", "gtd-wf"), ["build"], { stdio: "inherit" })
   console.log(`pinned ${PINNED} at ${git(PINNED, "log", "-1", "--format=%h %s")}`)
 }
 
@@ -155,28 +182,29 @@ const status = () => {
 }
 
 const config = (name) => {
-  if (!existsSync(join(PINNED, "workflows", name, "index.ts")))
+  const at = join(PINNED, "dist", `${name}.mjs`)
+  if (!existsSync(at))
     die(`the pinned checkout has no workflow "${name}" — commit it and run \`gtd-wf pin\``)
-  const at = join(PINNED, "workflows", name)
   process.stdout.write(`// Workflow "${name}" from the pinned checkout (gtd-wf pin moves it).
 import {
   feature as featureWorkflow,
   review as reviewWorkflow,
   fix as fixWorkflow,
-} from "${at}/index.ts"
+} from "${at}"
 
 export const feature = featureWorkflow()
 export const review = reviewWorkflow()
 export const fix = fixWorkflow()
 export default feature
 
-export { defaults, envDefaults, summary, base, steering, skills, access, doors } from "${at}/index.ts"
+export { defaults, envDefaults, summary, base, steering, skills, access, doors } from "${at}"
 `)
 }
 
 const USAGE = `usage: gtd-wf <command>
   eject <name> [--gtd <path>]  copy gtd's shipped workflows into workflows/<name>
   new <name> --from <name>     start a workflow as a copy of another
+  build                        bundle every workflow into dist/
   pin [ref]                    check out ref (default HEAD) in ${PINNED}
   status                       show the pin and the workflows it carries
   config <name>                print a gtd.config.ts using the pinned workflow`
@@ -198,6 +226,9 @@ switch (command) {
     copy(rest[0], from)
     break
   }
+  case "build":
+    build()
+    break
   case "pin":
     pin(rest[0])
     break
