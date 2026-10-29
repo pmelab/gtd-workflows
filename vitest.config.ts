@@ -1,21 +1,9 @@
-import { globSync, readdirSync, readFileSync } from "node:fs"
+import { globSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
 import { quickpickle } from "quickpickle"
-import { defineConfig, type Plugin } from "vitest/config"
-
-// The gtd internals a few tests reach (`@gtd/<unit>`) are its sources, which
-// import markdown as text the way its bundler does.
-const rawText = (): Plugin => ({
-  name: "raw-text",
-  transform(_code, id) {
-    if (/\.(md|yaml|html)$/.test(id)) {
-      return { code: `export default ${JSON.stringify(readFileSync(id, "utf8"))};`, map: null }
-    }
-  },
-})
+import { defineConfig } from "vitest/config"
 
 const alias = [
-  { find: /^@gtd\//, replacement: `${resolve("node_modules/@pmelab/gtd/src")}/` },
   { find: /^@support\/(.+)$/, replacement: `${resolve("support")}/$1.ts` },
 ]
 
@@ -30,7 +18,7 @@ export default defineConfig({
   test: {
     projects: workflows.map((name) => ({
       resolve: { alias },
-      plugins: [rawText(), quickpickle({ stepTimeout: 30_000, skipTags: ["@skip"] })],
+      plugins: [quickpickle({ stepTimeout: 30_000, skipTags: ["@skip"] })],
       test: {
         name,
         include: [`workflows/${name}/**/*.test.ts`, `workflows/${name}/**/*.feature`],

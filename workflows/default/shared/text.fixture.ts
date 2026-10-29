@@ -6,7 +6,7 @@ import {
   type ScopeAccess,
   type StepRequest,
 } from "@pmelab/gtd/flows"
-import { foldAccess } from "@gtd/replay/index.js"
+import { foldAccess } from "@support/access"
 import { access as bundledAccess } from "./access.js"
 import { skills as bundledSkills } from "./skills.js"
 import { defaults, envDefaults } from "./vars.js"

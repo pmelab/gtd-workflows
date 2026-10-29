@@ -32,6 +32,22 @@ gtd itself is never installed in the checkout: the running gtd serves every
   `workflows/<name>/EJECTED.json` names it; `gtd-wf status` shows it beside the
   gtd on `PATH`.
 
+## The default workflow
+
+`default` is the feature → review → fix workflow gtd used to bundle, plus
+`rollout` and `cleanup` for release flags.
+
+- [The guide](docs/default.md) — what you do at each moment of a process
+- [Reference](docs/reference.md) — every step, refusal and setting, and how to
+  reuse its parts in your own `gtd.config.ts`
+- [Setup](docs/setup.md) — the skills its prompts name, and how to swap them
+- [Delivery model](docs/delivery.md) — trunk-based delivery behind release
+  flags, and where it puts human gates
+- [Glossary](CONTEXT.md) — the words it adds to gtd's
+
+`evals/` holds the workflow's prompt evals, copied verbatim from gtd; they are
+not yet wired to this repository. See [Prompt evals](docs/evals.md).
+
 ## Writing a workflow
 
 ```sh
