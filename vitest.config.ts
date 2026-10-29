@@ -3,9 +3,7 @@ import { resolve } from "node:path"
 import { quickpickle } from "quickpickle"
 import { defineConfig } from "vitest/config"
 
-const alias = [
-  { find: /^@support\/(.+)$/, replacement: `${resolve("support")}/$1.ts` },
-]
+const alias = [{ find: /^@support\/(.+)$/, replacement: `${resolve("support")}/$1.ts` }]
 
 // One project per workflow: each registers its own steps, and two copies of
 // one workflow would register the same step twice.

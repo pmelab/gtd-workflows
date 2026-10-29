@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "NodeNext",
     "moduleDetection": "force",
@@ -18,14 +16,8 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "paths": {
-      "@support/*": [
-        "./support/*.ts"
-      ]
+      "@support/*": ["./support/*.ts"]
     }
   },
-  "include": [
-    "workflows",
-    "support",
-    "vitest.config.ts"
-  ]
+  "include": ["workflows", "support", "vitest.config.ts"]
 }
