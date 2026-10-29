@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest"
 import {
-  installContext,
   type Change,
   type JudgeAnswer,
   type JudgeQuestion,
   type ScopeOptions,
-  type StepRequest,
 } from "@pmelab/gtd/flows"
+import { installContext, type StepRequest } from "@pmelab/gtd/testkit"
 import {
   buildTail,
   humanReview,
@@ -577,7 +576,9 @@ describe("review verdict routing", () => {
 
 describe("the default quality lenses", () => {
   it("are the seven lenses in the settled order", () => {
-    expect(bundled.defaults.qualityReviews!.split(",").map((l) => l.trim())).toEqual([
+    expect(
+      bundled.workflowOptions.defaults.qualityReviews!.split(",").map((l) => l.trim()),
+    ).toEqual([
       "correctness",
       "owasp-security",
       "ponytail-review",

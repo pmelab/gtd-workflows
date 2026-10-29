@@ -1,4 +1,4 @@
-import { read, refuse, removeScript, run, start, type WorkflowBase } from "@pmelab/gtd/flows"
+import { read, refuse, removeScript, run, start } from "@pmelab/gtd/flows"
 import { buildTail, reUnwind } from "../shared/review.js"
 import { gate } from "../shared/health.js"
 import { shipped } from "../shared/options.js"
@@ -54,7 +54,3 @@ export const review = shipped(
   },
   (_workflow, vars) => vars.reviewBase || "",
 )
-
-/** @deprecated The `review` factory carries its own base; kept so a hand-written `review` re-exporting it still maps `reviewBase`. */
-export const base: WorkflowBase = (workflow, vars) =>
-  workflow === "review" ? (vars.reviewBase ?? "") : undefined

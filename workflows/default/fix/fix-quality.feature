@@ -9,8 +9,8 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
   to check against, the `criteria-coverage` lens runs no turn.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "criteria-coverage, correctness"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "criteria-coverage, correctness"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -59,8 +59,6 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
       """
     And step "build.quality.sorting" runs its script
     And step "build.quality.gating" runs its script
-    And step "build.quality.picking" runs its script
-    And step "build.quality.closing" runs its script
     And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -73,9 +71,11 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
         renamed to sum
       """
     And step "build.review.carrying" runs its script
+    And step "build.quality.closing" runs its script
 
   Scenario: a design finding and one the fix cap left reach the finding gate, and a ticked one is fixed there
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.picking" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"design","p":0.9}]
       """

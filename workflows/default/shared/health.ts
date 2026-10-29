@@ -1,12 +1,12 @@
 import {
   answered,
   check,
-  env,
+  envSettings,
   human,
   judge,
   mark,
   numeric,
-  vars,
+  settings,
   type CheckOptions,
   type JudgeQuestion,
 } from "@pmelab/gtd/flows"
@@ -19,7 +19,7 @@ export const FIX_CAP = 3
 
 /** Run the suite as step `name`; resolves `true` when it passed. A failure is in `.gtd/FEEDBACK.md`. */
 export const baseline = (name: string, label = "Checking the baseline"): Promise<boolean> =>
-  check(name, env.testCommand ?? "", { report: FEEDBACK, label })
+  check(name, envSettings.testCommand ?? "", FEEDBACK, { label })
 
 /**
  * Re-run a red check as step `name` before a person sees it. Green records
@@ -30,9 +30,8 @@ export const recheck = async (
   red: string,
   options: Pick<CheckOptions, "sweepOnGreen"> = {},
 ): Promise<boolean> => {
-  const green = await check(name, env.testCommand ?? "", {
+  const green = await check(name, envSettings.testCommand ?? "", FEEDBACK, {
     ...options,
-    report: FEEDBACK,
     label: "Re-running checks",
   })
   if (green) mark("flaky", red)
@@ -118,7 +117,7 @@ const compare = async (
   })
   // Evidence the budget cut can make two different reports look alike: neither sameness nor progress.
   if (!comparable || truncated.length > 0) return undefined
-  const minP = numeric(vars.judgeIdenticalMinP, Infinity)
+  const minP = numeric(settings.judgeIdenticalMinP, Infinity)
   if (answered(answers.verdict, "identical", minP)) return "identical"
   return answered(answers.verdict, "progress", minP) ? "progress" : undefined
 }
@@ -146,8 +145,7 @@ const healthSweep = (options: HealthOptions): string[] => [
 ]
 
 const runSuite = (options: HealthOptions): Promise<boolean> =>
-  check("health.check", env.testCommand ?? "", {
-    report: FEEDBACK,
+  check("health.check", envSettings.testCommand ?? "", FEEDBACK, {
     label: "Running checks",
     sweepOnGreen: healthSweep(options),
   })

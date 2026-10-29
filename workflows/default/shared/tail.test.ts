@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
-import {
-  installContext,
-  type Change,
-  type CodeThreadInfo,
-  type StepRequest,
-} from "@pmelab/gtd/flows"
+import { type Change, type CodeThreadInfo } from "@pmelab/gtd/flows"
+import { installContext, type StepRequest } from "@pmelab/gtd/testkit"
 import type { Guard } from "./health.js"
 import { handOffReview, qualityLap, REVIEW_ORIG, tail } from "./tail.js"
 import { fixtureContext } from "./text.fixture.js"

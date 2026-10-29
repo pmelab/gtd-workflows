@@ -56,12 +56,19 @@ npm install
 bin/gtd-wf new mine --from default   # or start an empty directory
 ```
 
-A workflow is a directory with an `index.ts` exporting what a `gtd.config.ts`
-exports: workflow functions or factories, and the reserved exports (`defaults`,
-`summary`, `steering`, …). It imports gtd only through its public subpaths —
-`@pmelab/gtd/flows`, `/wire`, `/steering`, `/workflow-kit`. See gtd's
+A workflow is a directory with an `index.ts` exporting its workflow factories
+and the parts a `gtd.config.ts` composes into flows of its own. A factory's
+build carries its own settings, skills, access, steering files and summary, so
+`export default feature()` alone is a whole config; a config's own flow gets the
+same through gtd's `workflow(flow, options)` (the `default` workflow exports
+them as `workflowOptions`). It exports none of the file-level names gtd no
+longer reads — `defaults`, `envDefaults`, `summary`, `base`, `steering`,
+`skills`, `access`, `doors` — since a config re-exporting one fails to load. It
+imports gtd only through its public subpaths — `@pmelab/gtd/flows`, `/wire`,
+`/steering`, `/workflow-kit` — and avoids their `@deprecated` names. See gtd's
 [configuration](https://github.com/pmelab/gtd/blob/main/docs/configuration.md)
-for the shape.
+and
+[workflow kit](https://github.com/pmelab/gtd/blob/main/docs/workflow-kit.md).
 
 To try changes, commit them and pin the working copy's commit:
 
@@ -87,6 +94,12 @@ a dev dependency: they drive gtd's real engine in memory against the workflow.
 Each workflow is its own vitest project — its `*.test.ts`, its `.feature` files
 and its `*.steps.ts` — so two workflows never share steps.
 
+Drives are strict: a scenario scripts only steps some drive of it reaches
+(checked at the scenario's end; `repo.drive` in code checks after every call), a
+Background scripts only steps some scenario of its feature reaches (checked at
+the feature's end), and a drive meant to rest at a check step says so
+(`the process is driven leniently`, or `{ strict: false }` in code).
+
 A test configures the workflow under test with `#workflow` (and
 `#workflow/feature`, `#workflow/review` … for its subdirectories), which
 resolves to the workflow directory the test lives in. A copy made with
@@ -100,5 +113,8 @@ Given a gtd config with:
   """
 ```
 
-Tests import the testkit through `@support/testkit`, which resolves `#workflow`
-in a config given as source.
+Tests import the testkit through `@support/testkit`, whose `testRepo` passes the
+workflow under test to gtd's as `modules`; scenarios get the same through
+`world.importable()` in a `Before` hook. Steps the scenarios need beyond gtd's
+own live in the workflow's `*.steps.ts`; one gtd also registers is an ambiguous
+step, which quickpickle rejects — delete the copy.

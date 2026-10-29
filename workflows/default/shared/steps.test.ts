@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { installContext, type ScopeOptions, type StepRequest } from "@pmelab/gtd/flows"
+import { type ScopeOptions } from "@pmelab/gtd/flows"
+import { installContext, type StepRequest } from "@pmelab/gtd/testkit"
 import { captureStep, fixtureContext } from "./text.fixture.js"
 import * as steps from "./steps.js"
 

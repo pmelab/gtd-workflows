@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { installContext } from "@pmelab/gtd/flows"
-import { headingSectionBodies } from "@pmelab/gtd/steering"
+import { installContext } from "@pmelab/gtd/testkit"
+import { sectionBodies } from "@pmelab/gtd/steering"
 import { findingsOf } from "./lenses.js"
 import { fixtureContext } from "./text.fixture.js"
 
 afterEach(() => installContext(undefined))
 
 const parse = (text: string) => {
-  installContext(fixtureContext({}, { sectionBodies: (t) => headingSectionBodies(t) }))
+  installContext(fixtureContext({}, { sectionBodies }))
   return findingsOf(text)
 }
 

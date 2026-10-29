@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { skills } from "./skills.js"
 import * as workflow from "../index.js"
 
-const { defaults } = workflow
+const { defaults } = workflow.workflowOptions
 
 const bundled = skills(defaults)
 

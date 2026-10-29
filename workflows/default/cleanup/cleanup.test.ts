@@ -26,7 +26,7 @@ const repoWith = () =>
 describe("the cleanup workflow", () => {
   it("lands a removal and reaches the review", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     const rest = await repo.drive({
       "cleanup.removing": (beat, r) => {
         expect(beat.content).toContain("live")
@@ -47,14 +47,14 @@ describe("the cleanup workflow", () => {
         ".gtd/REVIEW.orig.md": "# Review: abc1234\n",
       },
     })
-    await expect(repo.start("cleanup", "--var", "flag=live")).rejects.toThrow(
+    await expect(repo.start("cleanup", "live")).rejects.toThrow(
       ".gtd/REVIEW.orig.md is a pending hand-off",
     )
   })
 
   it("refuses a turn that leaves the registry entry", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({ "cleanup.removing": (_, r) => r.write("src/a.ts", "export const on = true\n") }),
     ).rejects.toThrow('gtd land: cleanup: src/flags/index.ts still declares flag "live"')
@@ -62,17 +62,17 @@ describe("the cleanup workflow", () => {
 
   it("refuses a turn leaving the env var in a shipped source, naming path:line", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({ "cleanup.removing": (_, r) => r.write("src/flags/index.ts", WITHOUT_LIVE) }),
     ).rejects.toThrow("gtd land: cleanup: src/a.ts:1 still names GTD_FLAG_LIVE")
   })
 
   it.each([
-    [[], "gtd: cleanup needs --var flag=<name>"],
-    [["--var", "flag=nope"], 'gtd: cleanup: no flag "nope" in src/flags/index.ts'],
-    [["--var", "flag=ops1"], 'gtd: cleanup: flag "ops1" is ops, not release'],
-    [["--var", "flag=alpha"], 'gtd: cleanup: flag "alpha" is not default-on — roll it out first'],
+    [[""], "gtd: cleanup needs a flag: gtd start cleanup <flag>"],
+    [["nope"], 'gtd: cleanup: no flag "nope" in src/flags/index.ts'],
+    [["ops1"], 'gtd: cleanup: flag "ops1" is ops, not release'],
+    [["alpha"], 'gtd: cleanup: flag "alpha" is not default-on — roll it out first'],
   ])("refuses %j at start", async (args, message) => {
     await expect(repoWith().start("cleanup", ...args)).rejects.toThrow(message)
   })
@@ -97,8 +97,12 @@ describe("the cleanup guard over every later agent turn", () => {
     "build.quality.triage": () => '[{"id":"Q1","answer":"mechanical","p":0.9}]',
   }
 
-  // Without the shipped access rules, which would refuse a source write from a read-only turn first: the guard is the second line.
-  const NO_ACCESS = CONFIG.replace("  access,\n", "")
+  // With the shipped access rules lifted, which would refuse a source write from a read-only turn first: the guard is the second line.
+  const noAccess = (lens?: string) => `import { defineConfig } from "@pmelab/gtd/flows"
+${CONFIG}export const config = defineConfig({
+  access: { "build.review": {}${lens === undefined ? "" : `, "build.quality.${lens}": {}`} },
+})
+`
 
   const guarded = (lenses = "", workflow = CONFIG) =>
     testRepo({
@@ -121,7 +125,7 @@ describe("the cleanup guard over every later agent turn", () => {
   }
 
   const driven = async (repo: ReturnType<typeof guarded>, actors: Actors) => {
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     return repo.drive({ ...REMOVED, ...actors })
   }
 
@@ -160,7 +164,7 @@ describe("the cleanup guard over every later agent turn", () => {
     let stopped = false
     let runs = 0
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({
         ...REMOVED,
@@ -182,7 +186,7 @@ describe("the cleanup guard over every later agent turn", () => {
   it("refuses an escalation describe turn that re-adds the env var", async () => {
     let runs = 0
     await expect(
-      driven(guarded("", NO_ACCESS), {
+      driven(guarded("", noAccess()), {
         "build.health.check": (_, r) => r.write(FEEDBACK, `failing ${runs++}\n`),
         "build.health.recheck": (_, r) => r.write(FEEDBACK, `failing ${runs++}\n`),
         "build.health.judge": () => '[{"id":"verdict","answer":"progress","p":0.9}]',
@@ -194,7 +198,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a quality fix turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("correctness", NO_ACCESS), {
+      driven(guarded("correctness", noAccess("correctness")), {
         ...MECHANICAL,
         "build.fix.quality.fixing": (_, r) => r.write("src/b.ts", NAMED),
       }),
@@ -203,7 +207,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a quality lens turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("correctness", NO_ACCESS), {
+      driven(guarded("correctness", noAccess("correctness")), {
         "build.quality.correctness.reviewing": (_, r) => r.write("src/b.ts", NAMED),
       }),
     ).rejects.toThrow("src/b.ts:1 still names GTD_FLAG_LIVE")
@@ -229,7 +233,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a review turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("", NO_ACCESS), {
+      driven(guarded("", noAccess()), {
         "build.review.reviewing": (_, r) => {
           r.write(".gtd/REVIEW.md", reviewDoc("fine"))
           r.write("src/b.ts", NAMED)
@@ -240,7 +244,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("leaves the human's review sign-off unguarded", async () => {
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     const rest = await repo.drive({
       ...REMOVED,
       "build.review.reviewing": (_, r) => r.write(".gtd/REVIEW.md", reviewDoc("fine")),
@@ -248,13 +252,16 @@ describe("the cleanup guard over every later agent turn", () => {
     expect(rest.state).toBe("build.review.await-review")
     repo.write("src/flags/index.ts", REGISTRY)
     await repo.land()
-    const done = await repo.drive({ "build.review.closing": () => undefined })
+    const done = await repo.drive({
+      "build.review.closing": () => undefined,
+      "build.health.check": () => undefined,
+    })
     expect(done.state).not.toBe("build.review.await-review")
   })
 
   it("does not blame a later fix turn for the entry the human restored at sign-off", async () => {
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     let runs = 0
     const check: Actors = {
       "build.health.check": (_, r) => {
@@ -270,7 +277,11 @@ describe("the cleanup guard over every later agent turn", () => {
     repo.write("src/flags/index.ts", REGISTRY)
     repo.write("src/hand.ts", CLEAN)
     await repo.land()
-    await repo.drive({ ...check, "build.fix": (_, r) => r.write("src/other.ts", CLEAN) })
+    await repo.drive({
+      ...check,
+      "build.review.closing": () => undefined,
+      "build.fix": (_, r) => r.write("src/other.ts", CLEAN),
+    })
     expect(repo.subjects()).toContain("gtd(agent): build.fix → build.health.check")
   })
 })

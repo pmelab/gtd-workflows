@@ -8,9 +8,9 @@ Feature: rejected naive passes walk one fixed path through the steer gate to the
   move it off its path.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

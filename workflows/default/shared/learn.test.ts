@@ -11,7 +11,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@pmelab/gtd/flows", async (original) => ({
   ...(await original<typeof import("@pmelab/gtd/flows")>()),
   read: (path: string) => state.files[path],
-  vars: state.vars,
+  settings: state.vars,
   judge: async (_: string, spec: { questions: { id: string }[] }) => {
     state.judged.push(spec.questions.map((q) => q.id))
     return { answers: state.answers, truncated: [] }

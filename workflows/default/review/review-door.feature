@@ -1,22 +1,21 @@
 @inmem
 Feature: the review door fixes its notes in the same process
 
-  `gtd door review` runs the feature's review over everything since its base:
+  `gtd start review` runs the feature's review over everything since its base:
   the triaged quality lap and its finding gate, then a reviewer's walkthrough
   of the change with the lap's summary, where the human's notes are fixed in
   place under the health loop before the review comes back. A sign-off ends
   the process; nothing is left for `fix`.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
       """
     And the working tree is committed as "feat: add calculator"
     And step "review-gate.check" changes nothing
-    And step "build.health.check" changes nothing
     And step "build.quality.correctness.reviewing" writes ".gtd/QUALITY.md" with:
       """
       # Quality
@@ -44,6 +43,7 @@ Feature: the review door fixes its notes in the same process
       """
     And step "build.review.carrying" runs its script
     And step "build.review.closing" runs its script
+    And step "build.health.check" changes nothing
 
   Scenario: the review is a walkthrough, its summary listing what the finding gate dropped
     When gtd opens door "review" with "HEAD~1"
@@ -172,7 +172,7 @@ Feature: the review door fixes its notes in the same process
       """
     When gtd opens door "review" with "HEAD~1"
     And the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## src/calc.ts:1 (thread PRRT_1)
 

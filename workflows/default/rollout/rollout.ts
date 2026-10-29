@@ -9,7 +9,7 @@ import {
   removeScript,
   run,
   scope,
-  vars,
+  settings,
 } from "@pmelab/gtd/flows"
 import { gate } from "../shared/health.js"
 import { flagShipped } from "../shared/options.js"
@@ -49,8 +49,8 @@ const listMentions = async (registry: string, name: string, guard: () => void): 
 
 // No review gate — a one-field change needs no review lap.
 export const rolloutFlow = async (): Promise<void> => {
-  const registry = vars.flagRegistry ?? ""
-  const name = vars.flag ?? ""
+  const registry = settings.flagRegistry ?? ""
+  const name = settings.flag ?? ""
   // Before the turn, never after: replay re-runs every pre-turn check.
   requireFlag("rollout", registry, name, false)
   // Strays count from the same point `before` is read at, not `start()`: the opening commit sweeps in whatever the human left uncommitted.

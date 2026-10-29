@@ -3,7 +3,7 @@ import {
   codeThreads,
   read,
   displayPath,
-  env,
+  envSettings,
   head,
   quote,
   accessFor,
@@ -289,7 +289,7 @@ export const startGateBlockedMessage = (): string =>
 \`.gtd/FEEDBACK.md\` holds the failing output.
 
 What each change does next (then run \`gtd land\`):
-- **Retry check** — edit the code and/or \`.gtd/FEEDBACK.md\` to fix the failing tests (**start-gate.check**). To repair the baseline as its own separate reviewed commit instead, abandon this start and run \`gtd --workflow fix\` from a clean \`idle\`.
+- **Retry check** — edit the code and/or \`.gtd/FEEDBACK.md\` to fix the failing tests (**start-gate.check**). To repair the baseline as its own separate reviewed commit instead, abandon this start and run \`gtd start fix\` from a clean \`idle\`.
 `
 
 export const reviewGateBlockedMessage = (): string =>
@@ -458,7 +458,7 @@ ${questionBarReturn}
   rewrite the answer or move it back to \`## Open Questions\`. A genuinely open PRODUCT point may still
   raise a fresh \`## Open Questions\` entry: the product gate sits
   on this path exactly as on the first lap
-- Before grouping anything, run \`${env.testCommand}\`
+- Before grouping anything, run \`${envSettings.testCommand}\`
   yourself — a loop-back runs no green-baseline gate, so the
   tree may already be red (reverting the edit can undo a fix it
   made). If red, make that breakage the first concern, ahead of
@@ -866,7 +866,7 @@ When you've been through the whole diff, run \`gtd land\`:
   not read.
 - **Leave notes** — a note on a \`.gtd/REVIEW.md\` line, a footnote anchored to
   a hunk, or prose under a chunk. The process ends with \`.gtd/REVIEW.md\` and
-  your notes left in place for \`gtd door fix\`, which fixes every note and
+  your notes left in place for \`gtd start fix\`, which fixes every note and
   every \`Risk:\` the reviewer marked, then asks for your review again.
 
 A footnote works the same way here as a line note:
@@ -1483,7 +1483,7 @@ ${behaviourTests}
   CLI, an existing module's exports — never a file this pass adds: that is
   naive structure a later reset and refactor replaces. A pass whose test
   imports a file it added is sent back
-- Run \`${env.testCommand}\` and finish only once it is green: the next step
+- Run \`${envSettings.testCommand}\` and finish only once it is green: the next step
   runs it on your diff and sends a red pass back
 - Leave \`.gtd/\` untouched
 - Leave everything uncommitted and finish your turn — do not commit

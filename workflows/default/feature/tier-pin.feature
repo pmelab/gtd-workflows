@@ -5,8 +5,8 @@ Feature: a process keeps the risk tier setting it started with when GTD_FLAG_RIS
   changes whether the process asks for and records a risk tier.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -44,10 +44,10 @@ Feature: a process keeps the risk tier setting it started with when GTD_FLAG_RIS
       """
 
   Scenario: a process started with the flag off records no tier after the flag turns on
-    Given the ambient environment variable "GTD_FLAG_RISK_TIER" is "0"
+    Given from now on the environment variable "GTD_FLAG_RISK_TIER" is "0"
     When the process is driven
     Then the process rests at "design.gate.answer"
-    Given the ambient environment variable "GTD_FLAG_RISK_TIER" is "1"
+    Given from now on the environment variable "GTD_FLAG_RISK_TIER" is "1"
     And step "design.gate.answer" changes nothing
     When the process is driven
     Then the process rests at "seam.naive"
@@ -55,10 +55,10 @@ Feature: a process keeps the risk tier setting it started with when GTD_FLAG_RIS
     And no commit body contains "Gtd-Mark:"
 
   Scenario: a process started with the flag on records its tier after the flag turns off
-    Given the ambient environment variable "GTD_FLAG_RISK_TIER" is "1"
+    Given from now on the environment variable "GTD_FLAG_RISK_TIER" is "1"
     When the process is driven
     Then the process rests at "design.gate.answer"
-    Given the ambient environment variable "GTD_FLAG_RISK_TIER" is "0"
+    Given from now on the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And step "design.gate.answer" changes nothing
     When the process is driven
     Then the process rests at "seam.naive"

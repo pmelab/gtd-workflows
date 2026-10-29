@@ -10,8 +10,8 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
   `## Quality lap` chunk, what became of every finding.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -77,7 +77,6 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     And step "build.quality.gating" runs its script
     And step "build.quality.picking" runs its script
     And step "build.quality.closing" runs its script
-    And step "build.review.carrying" runs its script
     And step "build.health.check" changes nothing
     And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
@@ -89,6 +88,7 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
 
       - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
+    And step "build.review.carrying" runs its script
 
   Scenario: a mechanical finding is fixed, the rest wait at the finding gate, and an untouched gate drops them
     Given judge step "build.quality.triage" answers:

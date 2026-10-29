@@ -9,7 +9,6 @@ Feature: each quality lens runs on its own model hint
     Given a gtd config with:
       """
       import { feature } from "#workflow/feature"
-      export { summary, steering, skills, access } from "#workflow/feature"
       export default feature({
         qualityReviews: "correctness, conventions, test-audit=opus",
       })

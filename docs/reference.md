@@ -13,58 +13,71 @@ Examples import the workflow from its pinned bundle, as the config
 
 ## Using it in `gtd.config.ts`
 
-The bundle exports the workflow's factories, its parts and the reserved exports
-(`defaults`, `envDefaults`, `summary`, `base`, `steering`, `skills`, `access`).
-The startable workflows are [factories](#factory-options) (`feature`, `review`,
-`fix`, `rollout`, `cleanup`) and plain flows (`ordinaryStart`, `reviewFlow`,
-`fixFlow`, …); the phases (`unwind`, `planAndBuild`, `design`, `buildFeature`,
-`seamBuild`, `implement`, `refactorFirst`, `buildTail`, `handOffTail`,
-`handOffReview`, `fixReviewNotes`, `qualityLap`, `healthy`, `gate`, …) and every
-single step (`triage`, `naivePass`, `fixCheck`, `reviewing`, `collecting`, …)
-are named exports too. A step's name is relative to the `scope()` it runs in —
-the workflow's `scope("build", …)` around `healthy` is what makes
-`build.health.check`. The full step names are this workflow's public API: a
-rename strands every process resting on the old name, so it only happens in a
-breaking release of this repository.
+The bundle exports the workflow's factories, its parts and `workflowOptions`.
+The startable workflows are its [factories](#factory-options) (`feature`,
+`review`, `fix`, `rollout`, `cleanup`). Everything else is a plain function: the
+flows the factories wrap (`ordinaryStart`, `reviewFlow`, `fixFlow`,
+`rolloutFlow`, `cleanupFlow`), the phases (`unwind`, `planAndBuild`, `design`,
+`buildFeature`, `seamBuild`, `implement`, `refactorFirst`, `buildTail`,
+`handOffTail`, `handOffReview`, `fixReviewNotes`, `qualityLap`, `healthy`,
+`gate`, …) and every single step (`triage`, `naivePass`, `fixCheck`,
+`reviewing`, `collecting`, …). gtd starts only what a config passes through its
+`workflow()` or a factory, so none of them is startable on its own, re-exported
+or not. A step's name is relative to the `scope()` it runs in — the workflow's
+`scope("build", …)` around `healthy` is what makes `build.health.check`. The
+full step names are this workflow's public API: a rename strands every process
+resting on the old name, so it only happens in a breaking release of this
+repository.
 
-Re-export `envDefaults` alongside `defaults`: a workflow that re-exports only
-`defaults` loses `testCommand`, `plannerModel` and `coderModel`. Re-export
-`skills` alongside `steering`: it is what makes the workflow's scope names
-addressable by a `config.skills` entry in THIS config (see
-[Skills and access](#skills-and-access)) — dropping it from the re-export list,
-the way dropping any other named export does, silently empties it instead of
-keeping the workflow's defaults, because gtd reads a missing export as `{}`.
+A factory carries its settings, skills, access, steering files and summary
+itself: `export default feature()` is a whole config.
 
-**Import the phases; never `export *` them.** Every exported function of your
-file is a startable workflow, so `export *` from the bundle would turn each
-phase and step into one — `gtd --workflow buildTail` would start a half-flow and
-strand the process. Re-export the reserved names and the workflows you want
-startable by name, and write each other workflow you want as your own function:
+A flow of your own carries what you pass to gtd's `workflow(flow, options)`.
+`workflowOptions` is what every factory carries — `defaults`, `envDefaults`,
+`summary`, `steering`, `skills` and `access` — so
+`workflow(flow, workflowOptions)` runs the reused phases with the shipped
+settings (`testCommand`, `plannerModel`, `coderModel`, …) and skill lists, and
+makes the workflow's scope names addressable by a `config.skills` entry in your
+config (see [Skills and access](#skills-and-access)). Spread it to add a base or
+doors of your own:
 
 ```ts
-import { start } from "@pmelab/gtd/flows"
+import { start, workflow } from "@pmelab/gtd/flows"
 import {
   afterTail,
   buildTail,
   feature,
-} from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
-
-export {
-  defaults,
-  envDefaults,
-  summary,
-  steering,
-  skills,
+  workflowOptions,
 } from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
 
 export default feature
 
-export async function hotfix() {
-  return afterTail(await buildTail(start(), { fixFirst: true }))
-}
+export const hotfix = workflow(
+  async () => afterTail(await buildTail(start(), { fixFirst: true })),
+  workflowOptions,
+)
 
-export const doors = { hotfix: { workflow: "hotfix" } }
+export const audit = workflow(async () => afterTail(await buildTail(start())), {
+  ...workflowOptions,
+  base: (_workflow, vars) => vars.reviewBase ?? "",
+})
 ```
+
+```bash
+gtd start audit --var reviewBase=main
+```
+
+A config exports no `defaults`, `envDefaults`, `summary`, `base`, `steering`,
+`skills`, `access` or `doors` of its own: gtd refuses to load one that does, and
+the bundle exports none of them.
+
+**Upgrading:** a config re-exporting the bundle's `defaults`, `envDefaults`,
+`summary`, `base`, `steering`, `skills`, `access` or `doors` fails to load —
+delete the re-export and pass `workflowOptions` to the `workflow()` of each flow
+of your own; a factory needs nothing. An exported plain function, `fixFlow` and
+the other `*Flow`s included, is no longer startable: wrap it,
+`export const myFix = workflow(() => fixFlow(), workflowOptions)`, or export the
+factory.
 
 `buildTail(base, options?)` is the call form;
 `buildTail(fixFirst, base, green?, options?)` is deprecated. A string second
@@ -89,13 +102,11 @@ and all.
 is deprecated; a function second argument selects it. A call fitting neither
 form is rejected before any step runs.
 
-A config's doors are those its workflows bring plus its `doors` export: export
-`fix` and `review` to keep their doors, `rollout` and `cleanup` to add theirs
-(see gtd's configuration,
-[Doors](https://github.com/pmelab/gtd/blob/main/docs/configuration.md#doors)).
-The bundle's own `doors` export is an empty no-op, and its `base` export maps
-`reviewBase` for a workflow named `review`; both are kept only so an older
-config re-exporting them still loads.
+A config's doors are those its workflows bring: export `fix` and `review` to
+keep their doors, `rollout` and `cleanup` to add theirs (see gtd's
+configuration,
+[Doors](https://github.com/pmelab/gtd/blob/main/docs/configuration.md#doors)). A
+flow of your own declares its doors in its `workflow()` options.
 
 ### Factory options
 
@@ -112,13 +123,6 @@ import {
   review,
 } from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
 
-export {
-  summary,
-  steering,
-  skills,
-  access,
-} from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
-
 export default feature({ testCommand: "npm run test:ci", coderModel: "fast" })
 export const quickReview = review({ qualityReviews: "correctness" })
 ```
@@ -128,7 +132,7 @@ Either way gtd **validates the options when it loads the config**. A rejected
 option fails every command:
 
 ```text
-gtd config:
+gtd: config:
   - /repo/gtd.config.ts: testComand: workflow "default" option "testComand": is unexpected, expected: "reviewBase" | … | "coderModel"
 ```
 
@@ -136,7 +140,8 @@ Unknown options are rejected, not dropped, so a misspelled or removed option
 fails the load.
 
 Awaiting a factory's call inside a composed flow throws — compose `fixFlow`,
-`reviewFlow` and the other plain flows instead.
+`reviewFlow` and the other plain flows instead, inside a `workflow()` of your
+own.
 
 ## The workflows
 
@@ -169,7 +174,7 @@ first three.
 - **`rollout`** and **`cleanup`** — retire a release flag; see
   [Rolling out and cleaning up a release flag](#rolling-out-and-cleaning-up-a-release-flag).
 
-**Upgrading:** the old state-named entry flag is gone, replaced by `--workflow`.
+**Upgrading:** the old state-named entry flag is gone, replaced by `gtd start`.
 Finish or abandon any process started with it before upgrading — its opening
 commit names no workflow, so it no longer replays.
 
@@ -803,7 +808,7 @@ a scope's `context` option, `slice()` from `@pmelab/gtd/flows`, `gtd slices`,
 `gtd summary --slice` and `gtd context-hook`. Finish or `gtd abandon` a
 `feature` process resting in a slice past its first, or in a continuation,
 before upgrading: replay refuses its history as divergence. A config passing a
-removed setting or option fails to load: drop it. Re-run `gtd install` (and
+removed setting or option fails to load: drop it. Re-run `gtd guide` (and
 replace a `gtd-build` it wrote) so no Claude Code hook still calls
 `gtd context-hook`.
 
@@ -841,8 +846,8 @@ a parent reaches every scope beneath it that sets none. The group scopes
 `build.fix`, `build.review.fix`, `build.quality`, `refactor.fix` and
 `implement.fix` run no turn and carry no key, nor do `seam.judge`, `seam.steer`
 and `seam.by-hand`. A custom workflow's own scopes are addressable through its
-own `skills` export (see
-[Using it in `gtd.config.ts`](#using-it-in-gtdconfigts)); the export may be a
+own `skills` option — `workflow(flow, { skills })` (see
+[Using it in `gtd.config.ts`](#using-it-in-gtdconfigts)); the option may be a
 function of the resolved vars, and must list every scope holding an agent step.
 The type can check an entry's VALUE (an array of strings) but never its KEY,
 since scope names come from the workflow actually in play — there is no editor
@@ -1021,8 +1026,8 @@ that reflows the steering file changes which branch the flow takes next.
   refactor's sign-off); blank runs no refactor quality lap. Each lens is its own
   scope, keyed `refactor.build.quality.<lens>`. Entries take the same
   `<lens>=<model>` hints, read from this list alone.
-- **`reviewBase`** (empty) — the commitish `--workflow review` reviews from
-  (`gtd door review` sets it).
+- **`reviewBase`** (empty) — the commitish `review` reviews from
+  (`gtd start review <commitish>` sets it).
 
 The prompts' wording — the voice below, the personas, the shared rules — is not
 a variable: a workflow that wants different words writes its own prompts,
@@ -1124,12 +1129,11 @@ export const cleanup = cleanupWorkflow()
 ```
 
 ```bash
-gtd door rollout <flag>
-gtd door cleanup <flag>
+gtd start rollout <flag>
+gtd start cleanup <flag>
 ```
 
-`gtd --workflow rollout --var flag=<name>` (likewise `cleanup`) starts the same
-process. A door with no argument is refused (see below).
+A door with no argument is refused (see below).
 
 - `flag` is the flag's name in the registry; it is required.
 - `flagRegistry` is a factory option
@@ -1157,24 +1161,24 @@ process. A door with no argument is refused (see below).
 - **Cleanup** takes a default-on release flag, deletes its entry and every
   `GTD_FLAG_<NAME>` check from `src/` (only `.ts`/`.tsx` files there are
   scanned), keeping the flag-on path, then runs the review. A review note ends
-  the process; `gtd door fix` works it off. Those checks re-run after every
+  the process; `gtd start fix` works it off. Those checks re-run after every
   later agent turn (fixes, escalation, quality lenses, the review's own turns)
   and a human's escalation landing, over the `src/` files that turn changed —
   but not after the human's review sign-off.
 
 Refusals, each exiting non-zero with the text on stderr:
 
-| Text                                                                                         | When                                                                            |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `gtd: <workflow> needs --var flag=<name>`                                                    | no `flag` var                                                                   |
-| `gtd door <rollout\|cleanup>: missing arguments — usage: gtd door <rollout\|cleanup> <flag>` | `gtd door rollout` or `gtd door cleanup` with no flag                           |
-| `gtd: <workflow>: no flag "<name>" in <registry>`                                            | name not in the registry                                                        |
-| `gtd: <workflow>: flag "<name>" is <kind>, not release`                                      | not a release flag                                                              |
-| `gtd: rollout: flag "<name>" is already default-on`                                          | rollout of a default-on flag                                                    |
-| `gtd: cleanup: flag "<name>" is not default-on — roll it out first`                          | cleanup of a flag still default-off                                             |
-| `gtd land: rollout-only: <paths> changed — rollout may only set …`                           | rollout (agent, mentions step or human fix) touched a file besides the registry |
-| `gtd land: rollout-only: other edits in <registry>: <faults>`                                | rollout (agent, mentions step or human fix) edited beyond that one field        |
-| `gtd land: cleanup: <registry> still declares flag "<name>"`                                 | cleanup left or restored the registry entry                                     |
-| `gtd land: cleanup: <paths> still names GTD_FLAG_<NAME>`                                     | cleanup left or reintroduced an env-var check under `src/`                      |
+| Text                                                                                           | When                                                                            |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `gtd: <workflow> needs a flag: gtd start <workflow> <flag>`                                    | an empty flag, or no `flag` var on a workflow started by another name           |
+| `gtd start <rollout\|cleanup>: missing arguments — usage: gtd start <rollout\|cleanup> <flag>` | `gtd start rollout` or `gtd start cleanup` with no flag                         |
+| `gtd: <workflow>: no flag "<name>" in <registry>`                                              | name not in the registry                                                        |
+| `gtd: <workflow>: flag "<name>" is <kind>, not release`                                        | not a release flag                                                              |
+| `gtd: rollout: flag "<name>" is already default-on`                                            | rollout of a default-on flag                                                    |
+| `gtd: cleanup: flag "<name>" is not default-on — roll it out first`                            | cleanup of a flag still default-off                                             |
+| `gtd land: rollout-only: <paths> changed — rollout may only set …`                             | rollout (agent, mentions step or human fix) touched a file besides the registry |
+| `gtd land: rollout-only: other edits in <registry>: <faults>`                                  | rollout (agent, mentions step or human fix) edited beyond that one field        |
+| `gtd land: cleanup: <registry> still declares flag "<name>"`                                   | cleanup left or restored the registry entry                                     |
+| `gtd land: cleanup: <paths> still names GTD_FLAG_<NAME>`                                       | cleanup left or reintroduced an env-var check under `src/`                      |
 
 New step names in both workflows are this workflow's public API.

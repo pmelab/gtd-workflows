@@ -1,6 +1,6 @@
 // Builds a fresh, disposable fixture repo for one eval case + variant: git
 // init -> case.base files committed (outside the review range) -> variant
-// files written into the working tree -> `gtd --workflow <name>` piped to
+// files written into the working tree -> `gtd start <name>` piped to
 // `sh`, so the opening commit captures exactly the variant's code under review.
 //
 // Deliberately imports nothing from `tests/` — those helpers are wired into
@@ -99,9 +99,14 @@ function writeOxfmtConfig(repo) {
 // step is reached through the evals' own workflow; GTD_EVAL_WORKFLOW names a
 // different gtd.config.ts to use instead.
 const EVAL_WORKFLOW = join(HERE, "gtd.config.ts")
+const BUNDLE = join(HERE, "..", "dist", "default.mjs")
 function writeEvalWorkflowConfig(repo) {
   const source = readFileSync(process.env.GTD_EVAL_WORKFLOW || EVAL_WORKFLOW, "utf-8")
-  writeFileSync(join(repo, "gtd.config.ts"), source)
+  // The fixture lives elsewhere: point the config's relative bundle import at this checkout's.
+  writeFileSync(
+    join(repo, "gtd.config.ts"),
+    source.replaceAll('"../dist/default.mjs"', JSON.stringify(BUNDLE)),
+  )
 }
 
 /**
@@ -145,15 +150,11 @@ export function buildFixture(caseDef, variant, env = scrubbedEnv()) {
   writeFiles(repo, caseDef.variants[variant])
 
   assertTmpCwd(repo)
-  const script = execFileSync(
-    process.execPath,
-    [GTD_BIN, "--workflow", workflowName(caseDef.state)],
-    {
-      cwd: repo,
-      env,
-      encoding: "utf-8",
-    },
-  )
+  const script = execFileSync(process.execPath, [GTD_BIN, "start", workflowName(caseDef.state)], {
+    cwd: repo,
+    env,
+    encoding: "utf-8",
+  })
   assertTmpCwd(repo)
   execFileSync("sh", ["-c", script], { cwd: repo, env, encoding: "utf-8" })
 

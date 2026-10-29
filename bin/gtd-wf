@@ -152,8 +152,6 @@ export const feature = featureWorkflow()
 export const review = reviewWorkflow()
 export const fix = fixWorkflow()
 export default feature
-
-export { defaults, envDefaults, summary, base, steering, skills, access, doors } from "${at}"
 `)
 }
 

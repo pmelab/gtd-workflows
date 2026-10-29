@@ -16,10 +16,9 @@ Feature: a person tries the naive pass by hand before anything builds on it
       Given a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
-      And an environment variable "GTD_QUALITYREVIEWS" set to ""
+      And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -57,7 +56,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
       And step "seam.check" changes nothing
       And step "seam.applying" runs its script
-      And step "seam.restoring" runs its script
 
     Scenario: a green naive pass rests at seam.try, applied to the working tree
       When the process is driven
@@ -73,6 +71,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: a clean landing signs the pass off, takes it out and lands it as the implementation
+      Given step "seam.restoring" runs its script
       When the process is driven
       Then the process rests at "seam.try"
       When gtd lands
@@ -93,7 +92,8 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: notes and a code edit send the pass back, out of the tree, to a naive pass that reads both
-      Given step "seam.naive", when prompted with "> subtract(5, 3) printed 8, not 2.", writes "notes-read.txt" with:
+      Given step "seam.restoring" runs its script
+      And step "seam.naive", when prompted with "> subtract(5, 3) printed 8, not 2.", writes "notes-read.txt" with:
         """
         read
         """
@@ -134,7 +134,8 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: notes alone send the pass back with no edits to read
-      Given step "seam.naive", when prompted with "They edited the code", writes "edits-read.txt" with:
+      Given step "seam.restoring" runs its script
+      And step "seam.naive", when prompted with "They edited the code", writes "edits-read.txt" with:
         """
         read
         """
@@ -150,6 +151,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
       And "edits-read.txt" does not exist
 
     Scenario: a requirements edit at seam.try stays, and sends the pass back
+      Given step "seam.restoring" runs its script
       When the process is driven
       Then the process rests at "seam.try"
       Given a file ".gtd/REQUIREMENTS.md" with:
@@ -184,10 +186,9 @@ Feature: a person tries the naive pass by hand before anything builds on it
       Given a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
-      And an environment variable "GTD_QUALITYREVIEWS" set to ""
+      And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -242,11 +243,10 @@ Feature: a person tries the naive pass by hand before anything builds on it
   Rule: with a naiveTest that is neither true nor false
 
     Background:
-      Given an environment variable "GTD_NAIVETEST" set to "maybe"
+      Given the environment variable "GTD_NAIVETEST" is "maybe"
       And a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature()
         """
       And a file "src/calc.ts" with:

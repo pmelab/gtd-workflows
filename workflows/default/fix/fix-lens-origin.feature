@@ -5,8 +5,8 @@ Feature: each finding at the finding gate names the lens that wrote it
   whose turn added it — even when two lenses give findings the same title.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness,tests"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness,tests"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

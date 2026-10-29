@@ -23,7 +23,7 @@ const repoWith = () =>
 describe("the rollout workflow", () => {
   it("lands a flip, checks the suite and ends with no review", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     const rest = await repo.drive({
       "rollout.flipping": (beat, r) => {
         expect(beat.content).toContain("alpha")
@@ -42,7 +42,7 @@ describe("the rollout workflow", () => {
   it("lands a flip when the tree was already dirty at the start", async () => {
     const repo = repoWith()
     repo.write("src/other.ts", "dirty\n")
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     const rest = await repo.drive({
       "rollout.flipping": (_, r) => r.write("src/flags/index.ts", FLIPPED),
       "rollout.suite.check": () => undefined,
@@ -53,7 +53,7 @@ describe("the rollout workflow", () => {
 
   it("refuses a turn that also changes a source file, naming it", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     await expect(
       repo.drive({
         "rollout.flipping": (_, r) => {
@@ -66,7 +66,7 @@ describe("the rollout workflow", () => {
 
   it("refuses an edit to a second entry", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     await expect(
       repo.drive({
         "rollout.flipping": (_, r) =>
@@ -77,7 +77,7 @@ describe("the rollout workflow", () => {
 
   it("refuses a turn that writes defaultOn: false, naming the fault", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     await expect(
       repo.drive({
         "rollout.flipping": (_, r) =>
@@ -88,7 +88,7 @@ describe("the rollout workflow", () => {
 
   it("refuses a turn that also writes under .gtd/", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     await expect(
       repo.drive({
         "rollout.flipping": (_, r) => {
@@ -100,17 +100,17 @@ describe("the rollout workflow", () => {
   })
 
   it.each([
-    [[], "gtd: rollout needs --var flag=<name>"],
-    [["--var", "flag=nope"], 'gtd: rollout: no flag "nope" in src/flags/index.ts'],
-    [["--var", "flag=ops1"], 'gtd: rollout: flag "ops1" is ops, not release'],
-    [["--var", "flag=live"], 'gtd: rollout: flag "live" is already default-on'],
+    [[""], "gtd: rollout needs a flag: gtd start rollout <flag>"],
+    [["nope"], 'gtd: rollout: no flag "nope" in src/flags/index.ts'],
+    [["ops1"], 'gtd: rollout: flag "ops1" is ops, not release'],
+    [["live"], 'gtd: rollout: flag "live" is already default-on'],
   ])("refuses %j at start", async (args, message) => {
     await expect(repoWith().start("rollout", ...args)).rejects.toThrow(message)
   })
 
   it("rests at rollout.suite.blocked on a red suite, with no fix turn", async () => {
     const repo = repoWith()
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     const rest = await repo.drive({
       "rollout.flipping": (_, r) => r.write("src/flags/index.ts", FLIPPED),
       "rollout.suite.check": (_, r) => r.write(".gtd/FEEDBACK.md", "1 failing\n"),
@@ -122,7 +122,7 @@ describe("the rollout workflow", () => {
   describe("the human's fix at rollout.suite.blocked", () => {
     const blocked = async () => {
       const repo = repoWith()
-      await repo.start("rollout", "--var", "flag=alpha")
+      await repo.start("rollout", "alpha")
       await repo.drive({
         "rollout.flipping": (_, r) => r.write("src/flags/index.ts", FLIPPED),
         "rollout.suite.check": (_, r) => r.write(".gtd/FEEDBACK.md", "1 failing\n"),
@@ -187,7 +187,7 @@ describe("rollout.mentions", () => {
       workflow: CONFIG,
       files: { "src/flags/index.ts": REGISTRY, "src/a.ts": "a\n", ...files },
     })
-    await repo.start("rollout", "--var", "flag=alpha")
+    await repo.start("rollout", "alpha")
     const rest = await repo.drive({
       ...flip,
       "rollout.suite.check": () => undefined,

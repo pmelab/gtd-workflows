@@ -7,8 +7,8 @@ Feature: the health check runs "testCommand"
   `GTD_TESTCOMMAND` override it.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """
       1 failing test
@@ -37,7 +37,7 @@ Feature: the health check runs "testCommand"
     And ".gtd/FEEDBACK.md" contains "<!-- gtd check "
 
   Scenario: a GTD_TESTCOMMAND environment variable overrides the default
-    Given an environment variable "GTD_TESTCOMMAND" set to "run-env-tests"
+    Given the environment variable "GTD_TESTCOMMAND" is "run-env-tests"
     And the command "run-env-tests" exits 1 with:
       """
       env-wins

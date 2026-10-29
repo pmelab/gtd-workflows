@@ -10,8 +10,8 @@ Feature: the review learns standards from the human's answers
   wording.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -67,10 +67,10 @@ Feature: the review learns standards from the human's answers
 
       - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
-    And step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
     And step "build.review.standards.recording" runs its script
     And step "build.review.standards.raising" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
 
   Scenario: a won't-fix the judge calls reusable is kept, and the review signs off
     Given judge step "build.review.standards.judge" answers:
@@ -78,7 +78,7 @@ Feature: the review learns standards from the human's answers
       [{"id":"standard-1","answer":"yes","p":0.9}]
       """
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 
@@ -122,7 +122,7 @@ Feature: the review learns standards from the human's answers
       """
     And step "build.health.check" changes nothing
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 
@@ -153,7 +153,7 @@ Feature: the review learns standards from the human's answers
       [{"id":"standard-1","answer":"yes","p":0.6}]
       """
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 
@@ -185,8 +185,10 @@ Feature: the review learns standards from the human's answers
 
       Please add subtract(a, b).
       """
+    And from now on the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And step "seam.naive" is prompted with "- Won't fix: subtract has no class"
     And step "build.quality.correctness.reviewing" is prompted with "- Won't fix: subtract has no class"
+    And step "build.quality.correctness.reviewing" changes nothing
     When the process is driven
     Then the process rests at "build.review.await-review"
 
@@ -213,7 +215,7 @@ Feature: the review learns standards from the human's answers
       [{"id":"answer-1","answer":"praise","p":0.9}]
       """
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 
@@ -282,7 +284,7 @@ Feature: the review learns standards from the human's answers
       [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
       """
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 
@@ -330,7 +332,7 @@ Feature: the review learns standards from the human's answers
       [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
       """
     When the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## subtract has no class
 

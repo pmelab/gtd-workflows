@@ -8,13 +8,13 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   its path.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
 
   Scenario: with a narrowed seamAllow a test file added by the refactor is refused
-    Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
-    And an environment variable "GTD_SEAMALLOW" set to "docs/**"
+    Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
+    And the environment variable "GTD_SEAMALLOW" is "docs/**"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -115,8 +115,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
 
 
   Scenario: refactorQualityReviews picks the refactor's lenses and qualityReviews does not reach them
-    Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to "correctness"
-    And an environment variable "GTD_QUALITYREVIEWS" set to "owasp-security"
+    Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness"
+    And the environment variable "GTD_QUALITYREVIEWS" is "owasp-security"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -188,7 +188,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -200,7 +199,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
 
 
     And step "refactor.build.quality.correctness.reviewing" changes nothing
@@ -217,7 +215,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: with the refactor lenses blank
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -289,7 +287,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
@@ -301,6 +298,19 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2
           add built on the shared op
         """
+      And step "refactor.re-unwind" runs its script
+      And step "implement.building" writes "src/calc.ts" with:
+        """
+        export const op = (a: number, b: number, sign: number) => a + sign * b
+        export const add = (a: number, b: number) => op(a, b, 1)
+        export const subtract = (a: number, b: number) => op(a, b, -1)
+        """
+      And step "implement.building" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds", () => {})
+        """
+      And step "implement.health.check" changes nothing
+      And step "implement.closing" runs its script
       And step "refactor.build.review.closing" runs its script
 
     Scenario: an edit note at the refactor review re-derives the refactor, never the design
@@ -354,7 +364,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2
           add built on the shared op
         """
-      And step "refactor.re-unwind" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
         export const combine = (a: number, b: number, sign: number) => a + sign * b
@@ -422,7 +431,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
 
         add and subtract differ only by sign.
         """
-      And step "refactor.re-unwind" runs its script
       And step "refactor.deriving" runs its script
       When gtd lands
       And the process is driven
@@ -442,7 +450,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         Rename op to adjust in the shared helper.
         """
-      And step "refactor.re-unwind" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
         export const adjust = (a: number, b: number, sign: number) => a + sign * b
@@ -594,18 +601,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And ".gtd/REVIEW.md" contains "A: add and subtract differ only by sign."
 
     Scenario: a no-change landing after the in-gate reply signs off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
-        """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
-        """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -673,18 +668,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And "src/calc.ts" contains "subtract"
 
     Scenario: a praise-only one-shot footnote signs off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
-        """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
-        """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -812,7 +795,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -846,7 +829,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -889,7 +872,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -923,7 +906,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -939,18 +922,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And driving the process is refused with "hand-edited src/calc.ts"
 
     Scenario: a praise note and a concluded thread on a settled round sign off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
-        """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
-        """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -967,7 +938,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -1001,7 +972,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -1022,18 +993,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And "src/calc.ts" contains "subtract"
 
     Scenario: a praise-only refactor review still signs off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
-        """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
-        """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -1167,8 +1126,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: with a quality lens on both the refactor and the feature
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to "correctness"
-      And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness"
+      And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -1240,7 +1199,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
@@ -1300,8 +1258,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: a refactor package never carries a test file, and demoted headings stop at ######
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
-      And an environment variable "GTD_SEAMALLOW" set to "docs/**"
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
+      And the environment variable "GTD_SEAMALLOW" is "docs/**"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -1351,14 +1309,15 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         Seam: the existing code the strays touch.
         """
-
-    Scenario: a test-file stray is dropped from the derived refactor package
-      Given step "seam.check" changes nothing
+      And step "seam.check" changes nothing
       And step "seam.naive" writes "src/acceptance.test.ts" with:
         """
         it("[AC-1] holds", () => {})
         """
-      And step "seam.naive" writes "src/calc.ts" with:
+      And step "refactor.deriving" runs its script
+
+    Scenario: a test-file stray is dropped from the derived refactor package
+      Given step "seam.naive" writes "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
         export const subtract = (a: number, b: number) => a - b
@@ -1368,24 +1327,17 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         import { expect, it } from "vitest"
         it("subtracts", () => expect(3 - 1).toBe(2))
         """
-      And step "refactor.deriving" runs its script
       When the process is driven
       Then the process rests at "refactor.building"
       And ".gtd/REFACTOR.md" contains "src/calc.ts"
       And ".gtd/REFACTOR.md" does not contain "src/calc.test.ts"
 
     Scenario: the refactor updates an existing test's call sites to the seam's new shape
-      Given step "seam.check" changes nothing
-      And step "seam.naive" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "seam.naive" writes "src/calc.ts" with:
+      Given step "seam.naive" writes "src/calc.ts" with:
         """
         export const add = ({ a, b }: { a: number; b: number }) => a + b
         export const subtract = ({ a, b }: { a: number; b: number }) => a - b
         """
-      And step "refactor.deriving" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
         export const add = ({ a, b }: { a: number; b: number }) => a + b
@@ -1396,21 +1348,15 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         import { add } from "./calc"
         it("adds", () => expect(add({ a: 1, b: 1 })).toBe(2))
         """
-      When the process is driven
+      When the process is driven leniently
       Then the process rests at "refactor.health.check"
 
     Scenario: the refactor may not drop an assertion from an existing test
-      Given step "seam.check" changes nothing
-      And step "seam.naive" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "seam.naive" writes "src/calc.ts" with:
+      Given step "seam.naive" writes "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
         export const subtract = (a: number, b: number) => a - b
         """
-      And step "refactor.deriving" runs its script
       And step "refactor.building" writes "src/calc.test.ts" with:
         """
         import { it } from "vitest"
@@ -1419,12 +1365,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       Then driving the process is refused with "refactor-tests"
 
     Scenario: a refactor-first whose strays are all test files goes straight to implement
-      Given step "seam.check" changes nothing
-      And step "seam.naive" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "seam.naive" writes "src/calc.test.ts" with:
+      Given step "seam.naive" writes "src/calc.test.ts" with:
         """
         import { expect, it } from "vitest"
         it("subtracts", () => expect(3 - 1).toBe(2))
@@ -1434,17 +1375,11 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And ".gtd/REFACTOR.md" does not exist
 
     Scenario: collected review headings re-derive at ### with the deepest capped at ######
-      Given step "seam.check" changes nothing
-      And step "seam.naive" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "seam.naive" writes "src/calc.ts" with:
+      Given step "seam.naive" writes "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
         export const subtract = (a: number, b: number) => a - b
         """
-      And step "refactor.deriving" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
         export const op = (a: number, b: number, sign: number) => a + sign * b
@@ -1452,7 +1387,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234

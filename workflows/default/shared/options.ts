@@ -3,11 +3,15 @@ import {
   defineWorkflow,
   type Flow,
   type WorkflowBase,
+  type WorkflowBuild,
   type WorkflowDoors,
   type WorkflowFactory,
   refuse,
-  vars,
+  settings,
 } from "@pmelab/gtd/flows"
+import { access } from "./access.js"
+import { steering, summary } from "./workflow-options.js"
+import { skills } from "./skills.js"
 import { defaultFlagRegistry, defaults, envDefaults } from "./vars.js"
 
 const setting = Schema.optionalWith(Schema.String, { exact: true })
@@ -46,47 +50,55 @@ const over = (
 
 /** The `naiveTest` setting, pinned at process start. Anything but true/false fails rather than guess. */
 export const naiveTestOn = (): boolean => {
-  const value = vars.naiveTest ?? defaults.naiveTest!
+  const value = settings.naiveTest ?? defaults.naiveTest!
   if (value !== "true" && value !== "false")
     refuse(`gtd: naiveTest must be "true" or "false", got ${JSON.stringify(value)}`)
   return value === "true"
 }
 
-/** A shipped flow as a factory: its options override the settings it declares, each in its own kind. */
+// Carried by every shipped workflow's build, so `export default feature()` is a whole config.
+const reserved = { skills, access, steering, summary }
+
+const schemaOf = <A, I>(options: Schema.Schema<A, I>) =>
+  Schema.standardSchemaV1(options, { onExcessProperty: "error", errors: "all" })
+
+/** A shipped flow's build: its options override the settings it declares, each in its own kind. */
+export const shippedBuild =
+  (flow: Flow, doors?: WorkflowDoors, base?: WorkflowBase) =>
+  (options: ShippedOptions): WorkflowBuild => ({
+    ...reserved,
+    flow,
+    defaults: over(defaults, options),
+    envDefaults: over(envDefaults, options),
+    doors,
+    base,
+  })
+
+/** A shipped flow as a factory. */
 export const shipped = (
   flow: Flow,
   doors?: WorkflowDoors,
   base?: WorkflowBase,
 ): WorkflowFactory<ShippedOptions> =>
-  defineWorkflow(
-    Schema.standardSchemaV1(ShippedOptions, { onExcessProperty: "error", errors: "all" }),
-    (options) => ({
-      flow,
-      defaults: over(defaults, options),
-      envDefaults: over(envDefaults, options),
-      doors,
-      base,
-    }),
-  )
+  defineWorkflow(schemaOf(ShippedOptions), shippedBuild(flow, doors, base))
 
 export const FlagOptions = Schema.Struct({ ...ShippedOptions.fields, flagRegistry: setting })
 
 export type FlagOptions = Schema.Schema.Encoded<typeof FlagOptions>
 
+/** A flag workflow's build: `flag` and `flagRegistry` are process settings, and its one door takes the flag. */
+export const flagBuild =
+  (flow: Flow, name: "rollout" | "cleanup") =>
+  (options: FlagOptions): WorkflowBuild => ({
+    ...reserved,
+    flow,
+    defaults: over({ ...defaults, flag: "", flagRegistry: defaultFlagRegistry }, options),
+    envDefaults: over(envDefaults, options),
+    doors: { [name]: { args: [{ name: "flag" }], vars: ({ flag }) => ({ flag: flag ?? "" }) } },
+    base: undefined,
+  })
+
 export const flagShipped = (
   flow: Flow,
   name: "rollout" | "cleanup",
-): WorkflowFactory<FlagOptions> =>
-  defineWorkflow(
-    Schema.standardSchemaV1(FlagOptions, { onExcessProperty: "error", errors: "all" }),
-    (options) => {
-      const flagDefaults = { ...defaults, flag: "", flagRegistry: defaultFlagRegistry }
-      return {
-        flow,
-        defaults: over(flagDefaults, options),
-        envDefaults: over(envDefaults, options),
-        doors: { [name]: { args: [{ name: "flag" }], vars: ({ flag }) => ({ flag: flag ?? "" }) } },
-        base: undefined,
-      }
-    },
-  )
+): WorkflowFactory<FlagOptions> => defineWorkflow(schemaOf(FlagOptions), flagBuild(flow, name))

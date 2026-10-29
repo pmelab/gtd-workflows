@@ -8,8 +8,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
   sign-off until the human concludes or deletes it.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -27,7 +27,6 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       - [ ] ./src/calc.ts#1-1
         new add function
       """
-    And step "build.review.carrying" runs its script
     And step "build.review.closing" runs its script
     When gtd opens door "review" with "HEAD~1"
     And the process is driven
@@ -195,7 +194,7 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       [{"id":"note-1","answer":"praise","p":0.99}]
       """
     When gtd lands
-    And the process is driven
+    And the process is driven leniently
     Then the process rests at "re-unwind"
     And the commit subjects end with:
       """
@@ -256,6 +255,7 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       Then landing is refused with "open-threads"
 
     Scenario: a collecting turn that leaves the thread ending in H: is refused
-      Given step "build.review.collecting" from now on changes nothing
+      Given step "build.review.carrying" runs its script
+      And step "build.review.collecting" from now on changes nothing
       When gtd lands
       Then driving the process is refused with "unanswered-threads"

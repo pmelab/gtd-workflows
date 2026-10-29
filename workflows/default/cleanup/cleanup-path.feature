@@ -8,23 +8,14 @@ Feature: cleanup walks one fixed path from the opening commit to idle
   every flag state takes the same path.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And a gtd config with:
       """
-      export {
-        feature as default,
-        feature,
-        defaults,
-        envDefaults,
-        summary,
-        steering,
-        skills,
-        access,
-      } from "#workflow/feature"
+      export { feature as default, feature } from "#workflow/feature"
       import { cleanup } from "#workflow"
       export { cleanup }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/flags/index.ts" with:
       """
       export const FLAGS = [
@@ -62,7 +53,7 @@ Feature: cleanup walks one fixed path from the opening commit to idle
     And step "build.review.closing" runs its script
 
   Scenario: removing the entry and the off path runs health, review and closing to idle
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     And the process is driven
     Then the process rests at "build.review.await-review"
     Given a file ".gtd/REVIEW.md" with:

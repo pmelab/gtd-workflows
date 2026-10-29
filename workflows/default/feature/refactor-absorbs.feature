@@ -9,10 +9,10 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
   quality lap covers the whole change, refactor included.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
-    And an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
+    And the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -77,7 +77,6 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234

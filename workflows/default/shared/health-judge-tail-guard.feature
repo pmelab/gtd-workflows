@@ -12,14 +12,14 @@ Feature: health.judge never manufactures "identical" from two unusably-cut tails
     Given a gtd config with:
       """
       import { healthy } from "#workflow"
-      import { agent, human } from "@pmelab/gtd/flows"
+      import { agent, human, workflow } from "@pmelab/gtd/flows"
 
-      export const defaults = { judgeIdenticalMinP: "0.7", judgeBudgetBytes: "32768" }
-      export const held = async () => {
+      const defaults = { judgeIdenticalMinP: "0.7", judgeBudgetBytes: "32768" }
+      export const held = workflow(async () => {
         await agent("first", "go")
         await healthy(() => agent("fix", "go"))
         await human("done")
-      }
+      }, { defaults })
       export default held
       """
     And step "first" writes "src/attempt.ts" with:
@@ -28,7 +28,7 @@ Feature: health.judge never manufactures "identical" from two unusably-cut tails
       """
 
   Scenario: a judgeBudgetBytes too small for either tail to keep a full line forbids identical
-    Given an environment variable "GTD_JUDGEBUDGETBYTES" set to "4"
+    Given the environment variable "GTD_JUDGEBUDGETBYTES" is "4"
     And step "health.check" writes ".gtd/FEEDBACK.md" with:
       """
       attempt 1 failed
@@ -63,7 +63,7 @@ Feature: health.judge never manufactures "identical" from two unusably-cut tails
 
   Scenario: two equal-length reports that differ before the cut but match after it forbid identical
     # 40 bytes across two reports keeps only each one's "shared tail line".
-    Given an environment variable "GTD_JUDGEBUDGETBYTES" set to "40"
+    Given the environment variable "GTD_JUDGEBUDGETBYTES" is "40"
     And step "health.check" writes ".gtd/FEEDBACK.md" with:
       """
       attempt one failed here

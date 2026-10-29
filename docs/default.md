@@ -178,7 +178,7 @@ The workflows are named `feature` (the ordinary start above), `review` and
 `fix`. `review` and `fix` never plan. Each brings its own door. This command:
 
 ```bash
-gtd door review <commitish>
+gtd start review <commitish>
 ```
 
 starts a review of everything from `<commitish>` to HEAD — the same review a
@@ -190,12 +190,12 @@ collected into `.gtd/REQUIREMENTS.md` and built by one `feedback.fixing` turn,
 with no design phase and no criteria — under the health loop, then it asks for
 your review again. Sign off and it closes; nothing is left behind. A note asking
 for new behaviour belongs in a `feature` process: sign off and start one.
-`gtd door fix` repairs a red baseline as its own reviewed commit; a note at its
+`gtd start fix` repairs a red baseline as its own reviewed commit; a note at its
 review is left in `.gtd/REVIEW.md` (beside the reviewer's original,
-`.gtd/REVIEW.orig.md`) for the next `gtd door fix`, and until that runs,
+`.gtd/REVIEW.orig.md`) for the next `gtd start fix`, and until that runs,
 starting `feature` or `review` is refused — remove both files to abandon the
-hand-off. `gtd doors` lists the doors of the workflows your `gtd.config.ts`
-exports, plus any it adds. `gtd --workflow <name>` starts any workflow by name.
+hand-off. A bare `gtd start` lists every workflow and door your `gtd.config.ts`
+exports; `gtd start <name>` starts any of them by name.
 
 Each workflow is a factory — `feature({ testCommand: "npm run ci" })` — whose
 options gtd validates when it loads the config; the pieces they are built from
@@ -264,10 +264,9 @@ reviewer" line for `high` is advisory, not a gate.
 
 Two more workflows retire a release flag. They are opt-in: the config
 `gtd-wf config default` prints does not export them, so add `rollout` and
-`cleanup` to its exports first. `gtd door rollout <flag>` turns it default-on,
-`gtd door cleanup <flag>` removes it afterwards (`/gtd rollout <flag>` and
-`/gtd cleanup <flag>` in Claude Code; `gtd --workflow rollout --var flag=<name>`
-works too). See
+`cleanup` to its exports first. `gtd start rollout <flag>` turns it default-on,
+`gtd start cleanup <flag>` removes it afterwards (`/gtd rollout <flag>` and
+`/gtd cleanup <flag>` in Claude Code). See
 [Rolling out and cleaning up a release flag](./reference.md#rolling-out-and-cleaning-up-a-release-flag).
 
 Rollout makes "on under `GTD_FLAG_<NAME>=1`" prose wrong until cleanup, so once
@@ -276,8 +275,8 @@ the suite passes it lists every line outside the registry that names the flag
 the rest) and edits none of them, leaving no file behind. The squash carries the
 list only through the closing message `gtd summary` writes; the `Gtd-Mark:`
 trailers survive only in the process history ref `refs/gtd/history/<entry>`,
-recovered with `gtd history fetch | sh` and read with
-`git log --format=%B <ref>`. An empty list says so in one line. Fix the prose by
-hand or leave it for cleanup.
+recovered with `s=$(gtd history fetch --json=script) && sh -c "$s"` and read
+with `git log --format=%B <ref>`. An empty list says so in one line. Fix the
+prose by hand or leave it for cleanup.
 
 The delivery model these workflows implement: [Delivery model](./delivery.md).

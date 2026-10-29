@@ -1,10 +1,8 @@
-// The `@pmelab/gtd/workflows` entry, built on its own: core never imports it,
-// a repository's `gtd.config.ts` does.
-import type { Doors } from "@pmelab/gtd/flows"
+// The bundle entry (`dist/default.mjs`) a repository's `gtd.config.ts` imports.
 import { feature } from "./feature/feature.js"
 
 export { threads, type ThreadInfo } from "@pmelab/gtd/flows"
-export * from "./shared/reserved.js"
+export { workflowOptions } from "./shared/workflow-options.js"
 export { FlagOptions, ShippedOptions } from "./shared/options.js"
 export { agentWithSkills, type ReviewRange } from "./shared/text.js"
 export * from "./shared/steps.js"
@@ -32,16 +30,9 @@ export {
   type ReviewOutcome,
 } from "./shared/review.js"
 export * from "./feature/feature.js"
-export { base, review, reviewFlow } from "./review/review.js"
+export { review, reviewFlow } from "./review/review.js"
 export { fix, fixFlow, fixReviewNotes } from "./fix/fix.js"
 export { rollout, rolloutFlow } from "./rollout/rollout.js"
 export { cleanup, cleanupFlow } from "./cleanup/cleanup.js"
 
 export default feature
-
-/**
- * @deprecated Empty: each shipped workflow builds its own doors, so a config
- * gets `fix` and `review [base]` by exporting `fix` and `review`, and
- * `rollout <flag>` and `cleanup <flag>` by exporting `rollout` and `cleanup`.
- */
-export const doors: Doors = {}

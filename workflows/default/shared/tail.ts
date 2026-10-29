@@ -5,7 +5,7 @@ import {
   run,
   scope,
   showScript,
-  vars,
+  settings,
   writeScript,
 } from "@pmelab/gtd/flows"
 import { reviewRisks } from "@pmelab/gtd/steering"
@@ -51,7 +51,7 @@ const lensLap = (
 ): Promise<"clean" | "findings"> => {
   const requirements = given ?? read(REQUIREMENTS)
   return kit.qualityLap(
-    (lenses ?? kit.lensEntriesOf(vars.qualityReviews ?? "")).filter(
+    (lenses ?? kit.lensEntriesOf(settings.qualityReviews ?? "")).filter(
       (entry) => requirements !== undefined || kit.lensOf(entry).lens !== COVERAGE,
     ),
     guarded(async (entry: string) => {
@@ -76,11 +76,11 @@ export const closeReview = (round: string): Promise<void> =>
     base: round,
   })
 
-/** Refuses while a reviewer's notes still await `gtd door fix`. */
+/** Refuses while a reviewer's notes still await `gtd start fix`. */
 export const refusePendingHandOff = (): void => {
   if (read(REVIEW_ORIG) !== undefined) {
     refuse(
-      `gtd: ${REVIEW_ORIG} is a pending hand-off — run \`gtd door fix\`, or remove ${REVIEW} and ${REVIEW_ORIG}.`,
+      `gtd: ${REVIEW_ORIG} is a pending hand-off — run \`gtd start fix\`, or remove ${REVIEW} and ${REVIEW_ORIG}.`,
     )
   }
 }
@@ -92,7 +92,7 @@ export interface TailOptions {
   readonly green?: boolean | undefined
   /** Runs after every code-changing turn: fix-check, quality fix, risk fix, nit fix, escalation describe. */
   readonly guard?: Guard | undefined
-  /** Quality-lap lens entries, `<lens>` or `<lens>=<model>`; default `lensEntriesOf(vars.qualityReviews)`. */
+  /** Quality-lap lens entries, `<lens>` or `<lens>=<model>`; default `lensEntriesOf(settings.qualityReviews)`. */
   readonly lenses?: readonly string[] | undefined
   /** `false` leaves the escalation's human rests unguarded; default `true`. */
   readonly guardRests?: boolean | undefined

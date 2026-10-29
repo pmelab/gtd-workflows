@@ -12,13 +12,13 @@ Feature: a red suite the fix loop cannot repair escalates to a person, twice at 
     Given a gtd config with:
       """
       import { fixCheck, healthy } from "#workflow"
-      import { agent, scope } from "@pmelab/gtd/flows"
+      import { agent, scope, workflow } from "@pmelab/gtd/flows"
 
-      export const defaults = { judgeIdenticalMinP: "0.7" }
-      export const held = async () => {
+      const defaults = { judgeIdenticalMinP: "0.7" }
+      export const held = workflow(async () => {
         await scope("start", () => agent("first", "go"))
         await healthy(() => fixCheck())
-      }
+      }, { defaults })
       export default held
       """
     And step "start.first" writes "src/a.ts" with:

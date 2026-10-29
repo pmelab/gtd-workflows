@@ -1,22 +1,13 @@
 Feature: rollout turns one release flag default-on and touches nothing else
 
-  `gtd --workflow rollout --var flag=<name>` has an agent set `defaultOn: true`
+  `gtd start rollout <flag>` has an agent set `defaultOn: true`
   on the named registry entry; a check refuses any other change, and a red
   suite rests at a human gate — never a fix turn.
 
   Background:
     Given a gtd config with:
       """
-      export {
-        feature as default,
-        feature,
-        defaults,
-        envDefaults,
-        summary,
-        steering,
-        skills,
-        access,
-      } from "#workflow/feature"
+      export { feature as default, feature } from "#workflow/feature"
       import { rollout } from "#workflow"
       export { rollout }
       export const elsewhere = rollout({ flagRegistry: "config/flags.ts" })
@@ -48,7 +39,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
     And step "rollout.suite.check" changes nothing
     And step "rollout.mentions" runs its script
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "idle"
     And "src/flags/index.ts" contains "kind: \"release\", defaultOn: true },"
@@ -72,7 +63,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       export const add = (a: number, b: number) => b + a
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     Then driving the process is refused with "rollout-only: src/calc.ts changed"
 
   Scenario: a turn editing a second registry entry is refused
@@ -85,7 +76,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
         { name: "live", owner: "d", expiry: "2027-04-01", kind: "release", defaultOn: true },
       ] as const
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     Then driving the process is refused with "other edits in src/flags/index.ts"
 
   Scenario: a factory flagRegistry names the one file the guard allows
@@ -110,7 +101,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
     And "config/flags.ts" contains "defaultOn: true"
 
   @inmem
-  Scenario: gtd door rollout starts the rollout of its flag argument
+  Scenario: gtd start rollout starts the rollout of its flag argument
     Given step "rollout.flipping" writes "src/flags/index.ts" with:
       """
       export const FLAGS = [
@@ -128,20 +119,20 @@ Feature: rollout turns one release flag default-on and touches nothing else
     And "src/flags/index.ts" contains "kind: \"release\", defaultOn: true },"
 
   @inmem
-  Scenario: gtd door rollout with no argument is refused naming the flag
-    Then opening door "rollout" is refused with "usage: gtd door rollout <flag>"
+  Scenario: gtd start rollout with no argument is refused naming the flag
+    Then opening door "rollout" is refused with "usage: gtd start rollout <flag>"
 
   Scenario: a missing flag var is refused before any turn
-    Then starting workflow "rollout" with "" is refused with "gtd: rollout needs --var flag=<name>"
+    Then starting workflow "rollout" with "''" is refused with "gtd: rollout needs a flag: gtd start rollout <flag>"
 
   Scenario: an unknown flag is refused before any turn
-    Then starting workflow "rollout" with "--var flag=nope" is refused with "no flag \"nope\" in src/flags/index.ts"
+    Then starting workflow "rollout" with "nope" is refused with "no flag \"nope\" in src/flags/index.ts"
 
   Scenario: an ops flag is refused before any turn
-    Then starting workflow "rollout" with "--var flag=ops1" is refused with "flag \"ops1\" is ops, not release"
+    Then starting workflow "rollout" with "ops1" is refused with "flag \"ops1\" is ops, not release"
 
   Scenario: an already default-on flag is refused before any turn
-    Then starting workflow "rollout" with "--var flag=live" is refused with "flag \"live\" is already default-on"
+    Then starting workflow "rollout" with "live" is refused with "flag \"live\" is already default-on"
 
   Scenario: a red suite after the flip rests at the blocked gate with no fix turn
     Given step "rollout.flipping" writes "src/flags/index.ts" with:
@@ -161,7 +152,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       1 test still failing
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "rollout.suite.blocked"
 
@@ -184,7 +175,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       1 test still failing
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "rollout.suite.blocked"
     And step "rollout.suite.blocked" writes "src/calc.ts" with:
@@ -212,7 +203,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       1 test still failing
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "rollout.suite.blocked"
     And step "rollout.suite.blocked" writes "src/flags/index.ts" with:
@@ -245,7 +236,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       1 test still failing
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "rollout.suite.blocked"
     And step "rollout.suite.blocked" writes ".gtd/FEEDBACK.md" with:
@@ -279,7 +270,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
       export const x = 1
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     Then driving the process is refused with "rollout-only: src/stray.ts changed"
 
   @inmem
@@ -304,7 +295,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
         { name: "live", owner: "d", expiry: "2027-04-01", kind: "release", defaultOn: true },
       ] as const
       """
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     Then driving the process is refused with "rollout-only: other edits in src/flags/index.ts"
 
   @inmem
@@ -331,7 +322,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
     And step "rollout.suite.check" changes nothing
     And step "rollout.mentions" runs its script
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "idle"
     And ".gtd/FEEDBACK.md" does not exist
@@ -433,7 +424,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
     And step "rollout.suite.check" changes nothing
     And step "rollout.mentions" runs its script
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "idle"
     And ".gtd/FEEDBACK.md" does not exist
@@ -463,7 +454,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
     And step "rollout.suite.check" changes nothing
     And step "rollout.mentions" runs its script
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the last commit subject is "gtd(check): rollout.mentions → idle"
     And the last commit body contains "Gtd-Mark: flag-mentions=2"
@@ -496,7 +487,7 @@ Feature: rollout turns one release flag default-on and touches nothing else
     And step "rollout.mentions" runs its script
     And step "unwind" changes nothing
     And step "start-gate.check" changes nothing
-    When gtd starts workflow "rollout" with "--var flag=alpha"
+    When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "idle"
     Given a file "TODO.md" with:

@@ -13,6 +13,6 @@ export {
 } from "../shared/review.js"
 export type { ReviewRange } from "../shared/text.js"
 export * from "./feature.js"
-export * from "../shared/reserved.js"
+export { workflowOptions } from "../shared/workflow-options.js"
 
 export default feature

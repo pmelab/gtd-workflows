@@ -6,8 +6,8 @@ Feature: the shipped workflow's scope access holds at landing
   thread may write the threaded file.
 
   Scenario: a review lens that writes src/ is refused at landing
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "owasp-security"
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is "owasp-security"
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """
       1 test failed
@@ -40,17 +40,20 @@ Feature: the shipped workflow's scope access holds at landing
   Scenario: a review turn answering a code thread in src/ lands with the file on the wire
     Given a gtd config with:
       """
-      import { start } from "@pmelab/gtd/flows"
-      import { afterTail, buildTail, gate } from "#workflow"
+      import { start, workflow } from "@pmelab/gtd/flows"
+      import { afterTail, buildTail, gate, workflowOptions } from "#workflow"
 
-      export { feature as default, defaults, envDefaults, summary, base, steering, skills, access } from "#workflow"
+      export { feature as default } from "#workflow"
 
-      export async function review() {
-        await gate("review-gate", "The baseline is red.")
-        return afterTail(await buildTail(start()))
-      }
+      export const review = workflow(
+        async () => {
+          await gate("review-gate", "The baseline is red.")
+          return afterTail(await buildTail(start()))
+        },
+        { ...workflowOptions, base: (_workflow, vars) => vars.reviewBase ?? "" },
+      )
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the ref "refs/tags/base" points at HEAD
     And a file "src/calc.ts" with:
       """

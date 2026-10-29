@@ -1,46 +1,30 @@
-// A config a test writes imports the workflow under test as `#workflow` (or
-// `#workflow/feature` …). gtd evaluates that config in memory, where nothing
-// resolves `#workflow`, and transpiling the workflow from disk on every beat is
-// slow. So the setup file imports the workflow once, natively, into a registry,
-// and each `#workflow` import is rewritten to read it from there.
-const REGISTRY = Symbol.for("gtd-workflows:modules")
-type Registry = Map<string, Readonly<Record<string, unknown>>>
+// The workflow under test — this vitest project's — keyed by the specifiers a
+// test's config imports it as: `#workflow`, and `#workflow/<dir>` for each
+// subdirectory with an `index.ts`. Imported on first use, never at load: a test
+// file's `vi.mock` must apply first.
+import { existsSync, readdirSync } from "node:fs"
+import { join } from "node:path"
 
-export const registry = (): Registry => {
-  const global = globalThis as { [REGISTRY]?: Registry }
-  return (global[REGISTRY] ??= new Map())
+/** What a repository's `gtd.config.ts` holds to run every workflow this one ships. */
+export const CONFIG_SCAFFOLD = `export { feature as default, feature } from "#workflow/feature"
+export { review } from "#workflow/review"
+export { fix } from "#workflow/fix"
+`
+
+type Modules = Record<string, Readonly<Record<string, unknown>>>
+
+const load = async (): Promise<Modules> => {
+  const root = process.env["GTD_WORKFLOW_ROOT"]
+  if (root === undefined) throw new Error("GTD_WORKFLOW_ROOT is not set")
+  const modules: Modules = { "#workflow": await import(join(root, "index.ts")) }
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const index = join(root, entry.name, "index.ts")
+    if (entry.isDirectory() && existsSync(index))
+      modules[`#workflow/${entry.name}`] = await import(index)
+  }
+  return modules
 }
 
-const lookup = (specifier: string): string =>
-  `globalThis[Symbol.for(${JSON.stringify(REGISTRY.description)})].get(${JSON.stringify(specifier)})`
+let loaded: Promise<Modules> | undefined
 
-const names = (list: string): (readonly [string, string])[] =>
-  list
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter((entry) => entry !== "")
-    .map((entry) => {
-      const [name, alias] = entry.split(/\s+as\s+/)
-      return [name!, alias ?? name!] as const
-    })
-
-let rewritten = 0
-
-/** `source` with every `import { … }` and `export { … }` of `#workflow…` reading the registry. */
-export const resolveWorkflow = (source: string): string =>
-  source.replace(
-    /\b(import|export)\s*\{([^}]*)\}\s*from\s*(["'])(#workflow(?:\/[\w-]+)?)\3/g,
-    (_, kind: string, list: string, __: string, specifier: string) => {
-      if (!registry().has(specifier)) throw new Error(`#workflow: no module "${specifier}"`)
-      const module = `__workflow${++rewritten}`
-      const bindings = names(list)
-      const lines = [`const ${module} = ${lookup(specifier)}`]
-      for (const [name, alias] of bindings) {
-        if (kind === "import") lines.push(`const ${alias} = ${module}[${JSON.stringify(name)}]`)
-        else if (alias === "default")
-          lines.push(`export default ${module}[${JSON.stringify(name)}]`)
-        else lines.push(`export const ${alias} = ${module}[${JSON.stringify(name)}]`)
-      }
-      return lines.join("\n")
-    },
-  )
+export const workflowModules = (): Promise<Modules> => (loaded ??= load())

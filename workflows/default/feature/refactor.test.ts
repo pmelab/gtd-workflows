@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
-import {
-  installContext,
-  type Change,
-  type DiffShapeResult,
-  type ScopeOptions,
-  type StepRequest,
-} from "@pmelab/gtd/flows"
+import { type Change, type DiffShapeResult, type ScopeOptions } from "@pmelab/gtd/flows"
+import { installContext, type StepRequest } from "@pmelab/gtd/testkit"
 import { fixtureContext, type TextContext } from "../shared/text.fixture.js"
 import { globMatches } from "@pmelab/gtd/wire"
 import {

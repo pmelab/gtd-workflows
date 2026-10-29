@@ -9,8 +9,8 @@ Feature: a feature process ends at the human review
   new behaviour above every ID handed out.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    Given the shipped workflows, as gtd-wf config prints them
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -68,7 +68,6 @@ Feature: a feature process ends at the human review
         new subtract function
       """
     And step "build.review.closing" runs its script
-    And step "build.review.carrying" runs its script
 
   Scenario: a feature process ends at the review gate
     When the process is driven

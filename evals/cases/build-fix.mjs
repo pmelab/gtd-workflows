@@ -58,7 +58,7 @@ describe("retryFetch", () => {
 })
 `,
     },
-    // `--workflow` commits the working tree as one opening commit, so even the
+    // `gtd start` commits the working tree as one opening commit, so even the
     // "nothing extra to plant" side needs a real byte to stage — an inert
     // marker outside the graded range.
     clean: {
