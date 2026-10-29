@@ -167,7 +167,7 @@ export const requireFlag = (
   name: string,
   defaultOn: boolean,
 ): void => {
-  if (name === "") return refuse(`gtd: ${workflow} needs --var flag=<name>`)
+  if (name === "") return refuse(`gtd: ${workflow} needs a flag: gtd start ${workflow} <flag>`)
   const entry = registryEntry(read(registryPath) ?? "", name)
   if (entry === undefined) return refuse(`gtd: ${workflow}: no flag "${name}" in ${registryPath}`)
   if (entry.kind !== "release") {

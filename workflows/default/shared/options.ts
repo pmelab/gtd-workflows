@@ -10,7 +10,7 @@ import {
   settings,
 } from "@pmelab/gtd/flows"
 import { access } from "./access.js"
-import { steering, summary } from "./reserved.js"
+import { steering, summary } from "./workflow-options.js"
 import { skills } from "./skills.js"
 import { defaultFlagRegistry, defaults, envDefaults } from "./vars.js"
 

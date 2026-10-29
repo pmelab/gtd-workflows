@@ -26,7 +26,7 @@ const repoWith = () =>
 describe("the cleanup workflow", () => {
   it("lands a removal and reaches the review", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     const rest = await repo.drive({
       "cleanup.removing": (beat, r) => {
         expect(beat.content).toContain("live")
@@ -47,14 +47,14 @@ describe("the cleanup workflow", () => {
         ".gtd/REVIEW.orig.md": "# Review: abc1234\n",
       },
     })
-    await expect(repo.start("cleanup", "--var", "flag=live")).rejects.toThrow(
+    await expect(repo.start("cleanup", "live")).rejects.toThrow(
       ".gtd/REVIEW.orig.md is a pending hand-off",
     )
   })
 
   it("refuses a turn that leaves the registry entry", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({ "cleanup.removing": (_, r) => r.write("src/a.ts", "export const on = true\n") }),
     ).rejects.toThrow('gtd land: cleanup: src/flags/index.ts still declares flag "live"')
@@ -62,17 +62,17 @@ describe("the cleanup workflow", () => {
 
   it("refuses a turn leaving the env var in a shipped source, naming path:line", async () => {
     const repo = repoWith()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({ "cleanup.removing": (_, r) => r.write("src/flags/index.ts", WITHOUT_LIVE) }),
     ).rejects.toThrow("gtd land: cleanup: src/a.ts:1 still names GTD_FLAG_LIVE")
   })
 
   it.each([
-    [[], "gtd: cleanup needs --var flag=<name>"],
-    [["--var", "flag=nope"], 'gtd: cleanup: no flag "nope" in src/flags/index.ts'],
-    [["--var", "flag=ops1"], 'gtd: cleanup: flag "ops1" is ops, not release'],
-    [["--var", "flag=alpha"], 'gtd: cleanup: flag "alpha" is not default-on — roll it out first'],
+    [[""], "gtd: cleanup needs a flag: gtd start cleanup <flag>"],
+    [["nope"], 'gtd: cleanup: no flag "nope" in src/flags/index.ts'],
+    [["ops1"], 'gtd: cleanup: flag "ops1" is ops, not release'],
+    [["alpha"], 'gtd: cleanup: flag "alpha" is not default-on — roll it out first'],
   ])("refuses %j at start", async (args, message) => {
     await expect(repoWith().start("cleanup", ...args)).rejects.toThrow(message)
   })
@@ -125,7 +125,7 @@ ${CONFIG}export const config = defineConfig({
   }
 
   const driven = async (repo: ReturnType<typeof guarded>, actors: Actors) => {
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     return repo.drive({ ...REMOVED, ...actors })
   }
 
@@ -164,7 +164,7 @@ ${CONFIG}export const config = defineConfig({
     let stopped = false
     let runs = 0
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     await expect(
       repo.drive({
         ...REMOVED,
@@ -244,7 +244,7 @@ ${CONFIG}export const config = defineConfig({
 
   it("leaves the human's review sign-off unguarded", async () => {
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     const rest = await repo.drive({
       ...REMOVED,
       "build.review.reviewing": (_, r) => r.write(".gtd/REVIEW.md", reviewDoc("fine")),
@@ -252,13 +252,16 @@ ${CONFIG}export const config = defineConfig({
     expect(rest.state).toBe("build.review.await-review")
     repo.write("src/flags/index.ts", REGISTRY)
     await repo.land()
-    const done = await repo.drive({ "build.review.closing": () => undefined })
+    const done = await repo.drive({
+      "build.review.closing": () => undefined,
+      "build.health.check": () => undefined,
+    })
     expect(done.state).not.toBe("build.review.await-review")
   })
 
   it("does not blame a later fix turn for the entry the human restored at sign-off", async () => {
     const repo = guarded()
-    await repo.start("cleanup", "--var", "flag=live")
+    await repo.start("cleanup", "live")
     let runs = 0
     const check: Actors = {
       "build.health.check": (_, r) => {
@@ -274,7 +277,11 @@ ${CONFIG}export const config = defineConfig({
     repo.write("src/flags/index.ts", REGISTRY)
     repo.write("src/hand.ts", CLEAN)
     await repo.land()
-    await repo.drive({ ...check, "build.fix": (_, r) => r.write("src/other.ts", CLEAN) })
+    await repo.drive({
+      ...check,
+      "build.review.closing": () => undefined,
+      "build.fix": (_, r) => r.write("src/other.ts", CLEAN),
+    })
     expect(repo.subjects()).toContain("gtd(agent): build.fix → build.health.check")
   })
 })

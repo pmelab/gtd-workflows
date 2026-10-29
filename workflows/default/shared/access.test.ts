@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { access } from "./access.js"
 import * as workflow from "../index.js"
 
-const { defaults } = workflow
+const { defaults, skills } = workflow.workflowOptions
 
 const bundled = access(defaults)
 
@@ -56,7 +56,7 @@ describe("the bundled workflow's access export", () => {
   })
 
   it("keys only turn scopes", () => {
-    const known = Object.keys(workflow.skills(defaults))
+    const known = Object.keys(skills(defaults))
     for (const key of Object.keys(bundled)) expect(known).toContain(key)
   })
 })

@@ -11,13 +11,13 @@ Feature: a fix loop still making progress at the cap gets one extra turn
     Given a gtd config with:
       """
       import { healthy } from "#workflow"
-      import { agent } from "@pmelab/gtd/flows"
+      import { agent, workflow } from "@pmelab/gtd/flows"
 
-      export const defaults = { judgeIdenticalMinP: "0.7" }
-      export const held = async () => {
+      const defaults = { judgeIdenticalMinP: "0.7" }
+      export const held = workflow(async () => {
         await agent("first", "go")
         await healthy(() => agent("fix", "go"))
-      }
+      }, { defaults })
       export default held
       """
     And step "first" writes "src/a.ts" with:

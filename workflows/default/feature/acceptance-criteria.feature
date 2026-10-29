@@ -9,7 +9,7 @@ Feature: acceptance criteria carry stable IDs, and a sketch that states clear on
   triage, no design gate. After design they are frozen.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/greeting.ts" with:

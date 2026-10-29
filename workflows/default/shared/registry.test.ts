@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { installContext } from "@pmelab/gtd/flows"
+import { installContext } from "@pmelab/gtd/testkit"
 import {
   flagMentions,
   flagReferences,
@@ -240,7 +240,7 @@ describe("requireFlag", () => {
   it("refuses an empty name", () => {
     asFile(ONE_LINE)
     expect(() => requireFlag("rollout", "reg.ts", "", false)).toThrow(
-      "gtd: rollout needs --var flag=<name>",
+      "gtd: rollout needs a flag: gtd start rollout <flag>",
     )
   })
 

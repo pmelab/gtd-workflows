@@ -1,11 +1,5 @@
-import {
-  installContext,
-  type CodeThreadInfo,
-  type AccessDef,
-  type FlowContext,
-  type ScopeAccess,
-  type StepRequest,
-} from "@pmelab/gtd/flows"
+import { type CodeThreadInfo, type AccessDef, type ScopeAccess } from "@pmelab/gtd/flows"
+import { installContext, type FlowContext, type StepRequest } from "@pmelab/gtd/testkit"
 import { foldAccess } from "@support/access"
 import { access as bundledAccess } from "./access.js"
 import { skills as bundledSkills } from "./skills.js"

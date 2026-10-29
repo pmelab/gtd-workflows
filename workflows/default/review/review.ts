@@ -1,12 +1,4 @@
-import {
-  read,
-  refuse,
-  removeScript,
-  run,
-  start,
-  type WorkflowBase,
-  workflow,
-} from "@pmelab/gtd/flows"
+import { read, refuse, removeScript, run, start } from "@pmelab/gtd/flows"
 import { buildTail, reUnwind } from "../shared/review.js"
 import { gate } from "../shared/health.js"
 import { shipped } from "../shared/options.js"
@@ -32,7 +24,7 @@ const fixFeedback = async (): Promise<void> => {
  * review that asks for changes is fixed in place and reviewed again, until
  * sign-off.
  */
-export const reviewFlow = workflow(async (): Promise<void> => {
+export const reviewFlow = async (): Promise<void> => {
   refusePendingHandOff()
   // A review's feedback is whatever sits in this file, so a leftover one would be built, then deleted.
   if (read(REQUIREMENTS) !== undefined) {
@@ -48,7 +40,7 @@ export const reviewFlow = workflow(async (): Promise<void> => {
     // The human reviews the whole change again; the lenses only what the fix changed.
     outcome = await buildTail(base, { lensBase: outcome.base })
   }
-})
+}
 
 export const review = shipped(
   reviewFlow,
@@ -62,7 +54,3 @@ export const review = shipped(
   },
   (_workflow, vars) => vars.reviewBase || "",
 )
-
-/** @deprecated The `review` factory carries its own base; kept so a hand-written `review` re-exporting it still maps `reviewBase`. */
-export const base: WorkflowBase = (workflow, vars) =>
-  workflow === "review" ? (vars.reviewBase ?? "") : undefined

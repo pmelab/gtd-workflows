@@ -9,7 +9,7 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
   quality lap covers the whole change, refactor included.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
@@ -77,7 +77,6 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -89,7 +88,6 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       - [ ] ./src/calc.ts#1-2
         subtract next to add
       """
-    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -110,6 +108,7 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       """
     And step "implement.health.check" changes nothing
     And step "implement.closing" runs its script
+    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.quality.correctness.reviewing"

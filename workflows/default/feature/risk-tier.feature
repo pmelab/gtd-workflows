@@ -8,7 +8,7 @@ Feature: the risk tier is proposed at triage and recorded behind GTD_FLAG_RISK_T
   is asked and no commit carries a Gtd-Mark.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
 
   Rule: with GTD_FLAG_RISK_TIER on
@@ -186,24 +186,6 @@ Feature: the risk tier is proposed at triage and recorded behind GTD_FLAG_RISK_T
 
         - AC-1: the change behaves as described.
         """
-      And step "seam.check" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds elsewhere", () => {})
-        """
-      And step "implement.applying" runs its script
-      And step "seam.naive" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "seam.naive" writes "src/calc.ts" with:
-        """
-        export const add = (a: number, b: number) => a + b
-        export const subtract = (a: number, b: number) => a - b
-        """
-      And judge step "seam.judge" answers:
-        """
-        [{"id":"shape","answer":"land","p":0.9}]
-        """
       When the process is driven
       Then the process rests at "design.gate.answer"
       Given a file ".gtd/REQUIREMENTS.md" with:
@@ -240,6 +222,24 @@ Feature: the risk tier is proposed at triage and recorded behind GTD_FLAG_RISK_T
         - AC-1: the change behaves as described.
         """
       And step "design.gate.answer" changes nothing
+      Given step "seam.check" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds elsewhere", () => {})
+        """
+      And step "implement.applying" runs its script
+      And step "seam.naive" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds", () => {})
+        """
+      And step "seam.naive" writes "src/calc.ts" with:
+        """
+        export const add = (a: number, b: number) => a + b
+        export const subtract = (a: number, b: number) => a - b
+        """
+      And judge step "seam.judge" answers:
+        """
+        [{"id":"shape","answer":"land","p":0.9}]
+        """
       When the process is driven
       Then the process rests at "implement.building"
       And the resting step's content contains "Put the new behaviour behind a new release flag"

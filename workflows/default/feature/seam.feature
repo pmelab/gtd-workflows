@@ -6,7 +6,7 @@ Feature: the naive pass and seam judge decide how a feature is built
   refactors the seam first behind a human approval, or retries the naive pass.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the gtd config ends with:
       """
       export const config = {
@@ -73,7 +73,7 @@ Feature: the naive pass and seam judge decide how a feature is built
       """
       [{"id":"shape","answer":"land","p":0.9}]
       """
-    When the process is driven
+    When the process is driven leniently
     Then the process rests at "implement.applying"
     And the last commit body contains "Gtd-Judge:"
     And the commit subjects end with:
@@ -182,7 +182,7 @@ Feature: the naive pass and seam judge decide how a feature is built
       import { expect, it } from "vitest"
       it("adds", () => expect(2 + 2).toBe(4))
       """
-    When the process is driven
+    When the process is driven leniently
     Then the process rests at "implement.applying"
     And the commit subjects end with:
       """

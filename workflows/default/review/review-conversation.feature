@@ -8,7 +8,7 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
   sign-off until the human concludes or deletes it.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
@@ -27,8 +27,6 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       - [ ] ./src/calc.ts#1-1
         new add function
       """
-    And step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
     When gtd opens door "review" with "HEAD~1"
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -97,7 +95,6 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
           - H: why not multiply?
           - A: this is the addition helper.
       """
-    And step "re-unwind" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -112,6 +109,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       - [ ] ./src/calc.ts#1-1
         new add function
       """
+    And step "build.review.closing" runs its script
+    And step "re-unwind" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "feedback.fixing"
@@ -125,7 +124,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
     And "src/calc.ts" does not contain "TODO"
 
   Scenario: the collecting turn's capture names the review commit, never inlines a diff
-    Given judge step "build.review.triage" answers:
+    Given step "build.review.closing" runs its script
+    And judge step "build.review.triage" answers:
       """
       [{"id":"note-1","answer":"edit","p":0.95}]
       """
@@ -194,8 +194,10 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       """
       [{"id":"note-1","answer":"praise","p":0.99}]
       """
+    Given step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
     When gtd lands
-    And the process is driven
+    And the process is driven leniently
     Then the process rests at "re-unwind"
     And the commit subjects end with:
       """
@@ -256,6 +258,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       Then landing is refused with "open-threads"
 
     Scenario: a collecting turn that leaves the thread ending in H: is refused
-      Given step "build.review.collecting" from now on changes nothing
+      Given step "build.review.carrying" runs its script
+      And step "build.review.closing" runs its script
+      And step "build.review.collecting" from now on changes nothing
       When gtd lands
       Then driving the process is refused with "unanswered-threads"

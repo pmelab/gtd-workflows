@@ -16,7 +16,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
       Given a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
       And the environment variable "GTD_QUALITYREVIEWS" is ""
@@ -57,7 +56,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
       And step "seam.check" changes nothing
       And step "seam.applying" runs its script
-      And step "seam.restoring" runs its script
 
     Scenario: a green naive pass rests at seam.try, applied to the working tree
       When the process is driven
@@ -75,6 +73,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
     Scenario: a clean landing signs the pass off, takes it out and lands it as the implementation
       When the process is driven
       Then the process rests at "seam.try"
+      Given step "seam.restoring" runs its script
       When gtd lands
       And step "implement.applying" runs its script
       And step "implement.health.check" changes nothing
@@ -116,6 +115,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
         export const hint = "subtract, not add"
         """
+      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
@@ -144,6 +144,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
         subtract adds.
         """
+      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
@@ -165,6 +166,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         - AC-1: subtract(a, b) returns a - b.
         - AC-2: subtract(a, b) rejects NaN.
         """
+      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
@@ -184,7 +186,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
       Given a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
       And the environment variable "GTD_QUALITYREVIEWS" is ""
@@ -229,12 +230,12 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
       And step "seam.check" changes nothing
       And step "seam.applying" runs its script
-      And step "seam.restoring" runs its script
 
     Scenario: the person tries the pass before the seam judge rules
       When the process is driven
       Then the process rests at "seam.try"
       And the resting step's content contains "the seam judge rules on its shape"
+      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.judge"
@@ -246,7 +247,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
       And a gtd config with:
         """
         import { feature } from "#workflow/feature"
-        export { summary, steering, skills, access } from "#workflow/feature"
         export default feature()
         """
       And a file "src/calc.ts" with:

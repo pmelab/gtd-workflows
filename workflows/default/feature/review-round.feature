@@ -10,15 +10,18 @@ Feature: the review gate's contract, and a feedback round's review base
   Background:
     Given a gtd config with:
       """
-      import { start } from "@pmelab/gtd/flows"
-      import { afterTail, buildTail, gate } from "#workflow"
+      import { start, workflow } from "@pmelab/gtd/flows"
+      import { afterTail, buildTail, gate, workflowOptions } from "#workflow"
 
-      export { feature as default, defaults, envDefaults, summary, base, steering, skills, access } from "#workflow"
+      export { feature as default } from "#workflow"
 
-      export async function review() {
-        await gate("review-gate", "The baseline is red.")
-        return afterTail(await buildTail(start()))
-      }
+      export const review = workflow(
+        async () => {
+          await gate("review-gate", "The baseline is red.")
+          return afterTail(await buildTail(start()))
+        },
+        { ...workflowOptions, base: (_workflow, vars) => vars.reviewBase ?? "" },
+      )
       """
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the ref "refs/tags/base" points at HEAD

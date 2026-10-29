@@ -9,7 +9,7 @@ Feature: a feature process ends at the human review
   new behaviour above every ID handed out.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
@@ -67,8 +67,6 @@ Feature: a feature process ends at the human review
       - [ ] ./src/calc.ts#2-2
         new subtract function
       """
-    And step "build.review.closing" runs its script
-    And step "build.review.carrying" runs its script
 
   Scenario: a feature process ends at the review gate
     When the process is driven
@@ -85,7 +83,8 @@ Feature: a feature process ends at the human review
   Scenario: a sign-off ends the process at idle
     When the process is driven
     Then the process rests at "build.review.await-review"
-    Given a file ".gtd/REVIEW.md" with:
+    Given step "build.review.closing" runs its script
+    And a file ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
 
@@ -110,6 +109,8 @@ Feature: a feature process ends at the human review
   Rule: a note asking for new behaviour runs the feedback lap
 
     Background:
+      When the process is driven
+      Then the process rests at "build.review.await-review"
       Given step "build.review.collecting" writes ".gtd/REQUIREMENTS.md" with:
         """
         # Requirements
@@ -135,10 +136,7 @@ Feature: a feature process ends at the human review
             - H: also export multiply
             - A: noted in the requirements.
         """
-      And step "re-unwind" runs its script
-      When the process is driven
-      Then the process rests at "build.review.await-review"
-      Given a file ".gtd/REVIEW.md" with:
+      And a file ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
 
@@ -167,6 +165,8 @@ Feature: a feature process ends at the human review
         - [ ] ./src/calc.ts#2-2
           new subtract function
         """
+      And step "re-unwind" runs its script
+      And step "build.review.closing" runs its script
 
     Scenario: the lap keeps AC-1, adds AC-2, and builds both before the next review
       Given step "design.triage" from now on changes nothing

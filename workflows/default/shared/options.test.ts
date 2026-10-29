@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest"
 import { FLAGS, type FlagDeclaration } from "./flags.js"
+import { workflow } from "@pmelab/gtd/flows"
 import { testRepo } from "@pmelab/gtd/testkit"
 import * as workflows from "../index.js"
 import { flagBuild, shippedBuild } from "./options.js"
 import { skills } from "./skills.js"
 
-const { defaults, envDefaults, feature, fix, review, ShippedOptions } = workflows
+const { feature, fix, review, ShippedOptions } = workflows
+const { defaults, envDefaults } = workflows.workflowOptions
 const flow = async (): Promise<void> => {}
 const built = shippedBuild(flow)
 
@@ -14,6 +16,22 @@ const loading = async (workflow: unknown): Promise<string> => {
   const { stderr } = await testRepo({ workflow: { default: workflow } }).gtd("next")
   return stderr
 }
+
+describe("the bundle entry", () => {
+  it("loads re-exported whole, exporting none of the names gtd refuses", async () => {
+    const repo = testRepo({ workflow: { ...workflows } })
+    expect(await repo.next()).toMatchObject({ idle: true, state: "idle" })
+  })
+
+  it("lets a flow of a config's own carry the shipped options", async () => {
+    const hotfix = workflow(async () => {
+      await workflows.fixCheck()
+    }, workflows.workflowOptions)
+    const repo = testRepo({ workflow: { default: feature, hotfix } })
+    await repo.start("hotfix")
+    expect(repo.messages().at(-1)).toContain("Gtd-Var: qualityReviews=")
+  })
+})
 
 describe("the shipped workflow factories", () => {
   it("take exactly the settings the shipped workflows declare as options", () => {
@@ -88,7 +106,10 @@ describe("the shipped workflow factories", () => {
   it("carry the skills, access, steering and summary, so a factory alone is a whole config", async () => {
     const build = built({})
     expect(build.skills).toBe(skills)
-    expect(build).toMatchObject({ steering: workflows.steering, summary: workflows.summary })
+    expect(build).toMatchObject({
+      steering: workflows.workflowOptions.steering,
+      summary: workflows.workflowOptions.summary,
+    })
     expect(typeof build.access).toBe("function")
     const repo = testRepo({ workflow: { default: feature() } })
     expect(await repo.next()).toMatchObject({ idle: true, state: "idle" })
@@ -123,7 +144,7 @@ describe("the shipped workflow factories", () => {
       "%s declares one door named after it, with one required flag arg",
       async (name) => {
         const repo = testRepo({ workflow: { default: feature, [name]: workflows[name]() } })
-        const { stdout } = await repo.gtd("doors")
+        const { stdout } = await repo.gtd("start")
         expect(stdout).toContain(name)
         expect(stdout).toContain("<flag>")
       },

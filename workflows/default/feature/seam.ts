@@ -155,7 +155,8 @@ const naiveGreen = (tip: KeptTip): Promise<boolean> => {
       "done",
       'exit "$code"',
     ].join("\n"),
-    { report: FEEDBACK, label: "Running the naive pass's tests" },
+    FEEDBACK,
+    { label: "Running the naive pass's tests" },
   )
 }
 

@@ -10,7 +10,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
   reaches both turns.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
@@ -101,7 +101,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -113,7 +112,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -128,6 +126,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"
@@ -167,7 +166,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -179,7 +177,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -194,6 +191,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"
@@ -213,7 +211,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -225,7 +222,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -240,6 +236,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"

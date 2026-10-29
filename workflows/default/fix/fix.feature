@@ -4,7 +4,7 @@ Feature: fix fixes the notes a hand-off leaves it
   own `.gtd/REVIEW.orig.md`; `gtd start fix` picks both up.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """

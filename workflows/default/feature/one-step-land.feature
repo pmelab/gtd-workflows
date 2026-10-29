@@ -9,7 +9,7 @@ Feature: a naive pass the judge rules land is itself the implementation
   move it off this path.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/greeting.ts" with:

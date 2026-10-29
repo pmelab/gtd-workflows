@@ -7,7 +7,7 @@ Feature: a naive pass ends only when its tests reach no file it added and the su
   failed attempts rest at `seam.steer`.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/calc.ts" with:
@@ -112,7 +112,7 @@ Feature: a naive pass ends only when its tests reach no file it added and the su
       it("subtracts", () => expect(subtract(5, 3)).toBe(2))
       it("still adds", () => expect(add(1, 1)).toBe(2))
       """
-    When the process is driven
+    When the process is driven leniently
     Then the process rests at "seam.check"
     And the resting step's content contains "git checkout -q HEAD --"
     And the resting step's content does not contain "'^'"
@@ -135,7 +135,7 @@ Feature: a naive pass ends only when its tests reach no file it added and the su
       it("still adds", () => expect(add(2, 2)).toBe(4))
       """
     And step "seam.check" from now on changes nothing
-    When the process is driven
+    When the process is driven leniently
     Then the process rests at "implement.applying"
     And the commit subjects end with:
       """

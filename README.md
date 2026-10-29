@@ -56,13 +56,16 @@ npm install
 bin/gtd-wf new mine --from default   # or start an empty directory
 ```
 
-A workflow is a directory with an `index.ts` exporting what a `gtd.config.ts`
-exports: workflow factories, plain flows marked with `workflow()`, and the
-reserved exports (`defaults`, `summary`, `steering`, …). A factory's build
-carries its own settings, skills, access, steering files and summary, so
-`export default feature()` alone is a whole config. It imports gtd only through
-its public subpaths — `@pmelab/gtd/flows`, `/wire`, `/steering`, `/workflow-kit`
-— and avoids their `@deprecated` names. See gtd's
+A workflow is a directory with an `index.ts` exporting its workflow factories
+and the parts a `gtd.config.ts` composes into flows of its own. A factory's
+build carries its own settings, skills, access, steering files and summary, so
+`export default feature()` alone is a whole config; a config's own flow gets the
+same through gtd's `workflow(flow, options)` (the `default` workflow exports
+them as `workflowOptions`). It exports none of the file-level names gtd no
+longer reads — `defaults`, `envDefaults`, `summary`, `base`, `steering`,
+`skills`, `access`, `doors` — since a config re-exporting one fails to load. It
+imports gtd only through its public subpaths — `@pmelab/gtd/flows`, `/wire`,
+`/steering`, `/workflow-kit` — and avoids their `@deprecated` names. See gtd's
 [configuration](https://github.com/pmelab/gtd/blob/main/docs/configuration.md)
 and
 [workflow kit](https://github.com/pmelab/gtd/blob/main/docs/workflow-kit.md).
@@ -90,6 +93,10 @@ Tests use gtd's
 a dev dependency: they drive gtd's real engine in memory against the workflow.
 Each workflow is its own vitest project — its `*.test.ts`, its `.feature` files
 and its `*.steps.ts` — so two workflows never share steps.
+
+Drives are strict: a scenario scripts a step only once a drive reaches it, and a
+drive meant to rest at a check step says so (`the process is driven leniently`,
+or `{ strict: false }` in code).
 
 A test configures the workflow under test with `#workflow` (and
 `#workflow/feature`, `#workflow/review` … for its subdirectories), which

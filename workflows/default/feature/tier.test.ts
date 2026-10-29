@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { installContext, type FlowContext } from "@pmelab/gtd/flows"
+import { installContext, type FlowContext } from "@pmelab/gtd/testkit"
 import { fixtureContext } from "../shared/text.fixture.js"
 import { productionSignals, readRiskTier, recordRisk, riskTierOn } from "./tier.js"
 

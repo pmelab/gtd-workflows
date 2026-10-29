@@ -8,7 +8,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   its path.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
 
@@ -188,7 +188,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       """
     And step "refactor.health.check" changes nothing
     And step "refactor.closing" runs its script
-    And step "refactor.build.review.carrying" runs its script
     And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
@@ -200,7 +199,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
 
 
     And step "refactor.build.quality.correctness.reviewing" changes nothing
@@ -277,10 +275,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         [{"id":"shape","answer":"refactor-first","p":0.9}]
         """
-      And step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
-        """
-        Seam: the existing code the strays touch.
-        """
       And step "refactor.deriving" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
@@ -289,7 +283,12 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
+
+    Scenario: an edit note at the refactor review re-derives the refactor, never the design
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
@@ -301,9 +300,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2
           add built on the shared op
         """
-      And step "refactor.build.review.closing" runs its script
-
-    Scenario: an edit note at the refactor review re-derives the refactor, never the design
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -361,6 +357,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         export const add = (a: number, b: number) => combine(a, b, 1)
         """
       And step "refactor.deriving" is prompted with "Review feedback"
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "refactor.build.review.await-review"
@@ -377,6 +374,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
 
     Scenario: a question answered at the refactor review reaches the re-derived package as ### Answered Questions
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -424,12 +436,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.re-unwind" runs its script
       And step "refactor.deriving" runs its script
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then ".gtd/REFACTOR.md" contains "## Review feedback"
       And ".gtd/REFACTOR.md" contains "### Answered Questions"
 
     Scenario: a human code edit at the refactor review is reverted by refactor.re-unwind
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file "src/calc.ts" with:
@@ -448,6 +476,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         export const adjust = (a: number, b: number, sign: number) => a + sign * b
         export const add = (a: number, b: number) => adjust(a, b, 1)
         """
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "refactor.build.review.await-review"
@@ -466,6 +495,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
 
     Scenario: an edit note the collecting turn leaves out refuses the landing and never signs off
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -485,11 +529,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.build.review.collecting" changes nothing
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "note-1"
       And driving the process is refused with "gtd abandon"
 
     Scenario: a code hand-edit the collecting turn leaves out refuses the landing naming the path
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file "src/calc.ts" with:
@@ -500,10 +561,27 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.build.review.collecting" changes nothing
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "src/calc.ts"
 
     Scenario: a hand-edit round with a line note rests at a closed collecting turn that folds both and holds no reply rules
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file "src/calc.ts" with:
@@ -523,6 +601,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2 rename the helper
           add built on the shared op
         """
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "refactor.build.review.collecting"
@@ -531,6 +610,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And the resting step's content does not contain "Code threads waiting on you"
 
     Scenario: a praise line note on a hand-edit round is never named by the refusal
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file "src/calc.ts" with:
@@ -552,10 +646,27 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.build.review.collecting" changes nothing
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "hand-edited src/calc.ts"
       And driving the process is refused without "lovely work"
 
     Scenario: a thread question at the refactor review gets one reply and no refactor package
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -594,18 +705,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And ".gtd/REVIEW.md" contains "A: add and subtract differ only by sign."
 
     Scenario: a no-change landing after the in-gate reply signs off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
         """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
+        Seam: the existing code the strays touch.
         """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
-        it("[AC-1] holds", () => {})
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
         """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -667,12 +781,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2
           add built on the shared op
         """
-      When gtd lands
-      And the process is driven
-      Then the process rests at "build.review.reviewing"
-      And "src/calc.ts" contains "subtract"
-
-    Scenario: a praise-only one-shot footnote signs off and the feature follows
       Given step "implement.building" writes "src/calc.ts" with:
         """
         export const op = (a: number, b: number, sign: number) => a + sign * b
@@ -685,6 +793,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "implement.health.check" changes nothing
       And step "implement.closing" runs its script
+      And step "refactor.build.review.closing" runs its script
+      When gtd lands
+      And the process is driven
+      Then the process rests at "build.review.reviewing"
+      And "src/calc.ts" contains "subtract"
+
+    Scenario: a praise-only one-shot footnote signs off and the feature follows
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -705,12 +835,40 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         [{"id":"note-1","answer":"praise","p":0.9}]
         """
+      Given step "implement.building" writes "src/calc.ts" with:
+        """
+        export const op = (a: number, b: number, sign: number) => a + sign * b
+        export const add = (a: number, b: number) => op(a, b, 1)
+        export const subtract = (a: number, b: number) => op(a, b, -1)
+        """
+      And step "implement.building" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds", () => {})
+        """
+      And step "implement.health.check" changes nothing
+      And step "implement.closing" runs its script
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "build.review.reviewing"
       And "src/calc.ts" contains "subtract"
 
     Scenario: a one-shot footnote judged edit that collecting leaves out refuses naming its anchor
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -733,11 +891,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.build.review.collecting" changes nothing
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "[^n1]"
       And driving the process is refused with "Rename the helper."
 
     Scenario: a one-shot footnote landed after an in-gate thread reply is judged, not signed off unjudged
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -792,10 +967,27 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.build.review.collecting" from now on changes nothing
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "[^n1]"
 
     Scenario: a change note left behind by a thread-only settled round refuses naming the note
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -862,11 +1054,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [{"id":"note-1","answer":"edit","p":0.9}]
         """
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "note-1"
       And driving the process is refused with "gtd abandon"
 
     Scenario: a hand-edit made before the thread refuses a thread-only settled round naming the path
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file "src/calc.ts" with:
@@ -935,22 +1144,27 @@ Feature: the refactor is reviewed on its own before the feature is implemented
           add built on the shared op
         """
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-feedback"
       And driving the process is refused with "hand-edited src/calc.ts"
 
     Scenario: a praise note and a concluded thread on a settled round sign off and the feature follows
-      Given step "implement.building" writes "src/calc.ts" with:
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
         """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
+        Seam: the existing code the strays touch.
         """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
-        it("[AC-1] holds", () => {})
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
         """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -1016,12 +1230,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         [{"id":"note-1","answer":"praise","p":0.9}]
         """
-      When gtd lands
-      And the process is driven
-      Then the process rests at "build.review.reviewing"
-      And "src/calc.ts" contains "subtract"
-
-    Scenario: a praise-only refactor review still signs off and the feature follows
       Given step "implement.building" writes "src/calc.ts" with:
         """
         export const op = (a: number, b: number, sign: number) => a + sign * b
@@ -1034,6 +1242,28 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "implement.health.check" changes nothing
       And step "implement.closing" runs its script
+      And step "refactor.build.review.closing" runs its script
+      When gtd lands
+      And the process is driven
+      Then the process rests at "build.review.reviewing"
+      And "src/calc.ts" contains "subtract"
+
+    Scenario: a praise-only refactor review still signs off and the feature follows
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -1047,13 +1277,41 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [x] ./src/calc.ts#1-2
           add built on the shared op
         """
+      Given step "implement.building" writes "src/calc.ts" with:
+        """
+        export const op = (a: number, b: number, sign: number) => a + sign * b
+        export const add = (a: number, b: number) => op(a, b, 1)
+        export const subtract = (a: number, b: number) => op(a, b, -1)
+        """
+      And step "implement.building" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds", () => {})
+        """
+      And step "implement.health.check" changes nothing
+      And step "implement.closing" runs its script
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "build.review.reviewing"
       And "src/calc.ts" contains "subtract"
 
     Scenario: a nit fix in the refactor that changes a non-stray is refused, though a glob stray widens the write access
-      Given step "seam.naive" writes "src/*.ts" with:
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
+      And step "seam.naive" writes "src/*.ts" with:
         """
         export const literalGlobName = 2
         """
@@ -1079,10 +1337,27 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         export const other = 1
         """
       When gtd lands
+      Given step "refactor.build.review.carrying" runs its script
+      And step "refactor.build.review.closing" runs its script
       Then driving the process is refused with "refactor-scope"
 
     Scenario: the nit-fix turn in the refactor may write the strays and .gtd/** only
-      Given step "seam.naive" writes "src/*.ts" with:
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
+      And step "seam.naive" writes "src/*.ts" with:
         """
         export const literalGlobName = 2
         """
@@ -1110,6 +1385,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And the output of gtd "next --json=access.write" contains ".gtd/**"
 
     Scenario: a blank refactorQualityReviews runs no refactor quality lap
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       And the commit subjects end with:
@@ -1119,6 +1409,21 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
 
     Scenario: a reviewer walks the human through the whole refactor, every chunk pointing at its code
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       And ".gtd/REVIEW.md" contains:
@@ -1131,7 +1436,22 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And no commit body contains "refactor.build.review.composing"
 
     Scenario: a risk the refactor's re-review marks again reaches the human unfixed
-      Given step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
+        """
+        # Review: abc1234
+
+        <!-- base: 0000000 -->
+
+        ## calc
+
+        - [ ] ./src/calc.ts#1-2
+          add built on the shared op
+        """
+      And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
 
@@ -1228,10 +1548,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         [{"id":"shape","answer":"refactor-first","p":0.9}]
         """
-      And step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
-        """
-        Seam: the existing code the strays touch.
-        """
       And step "refactor.deriving" runs its script
       And step "refactor.building" writes "src/calc.ts" with:
         """
@@ -1240,7 +1556,16 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
+
+    Scenario: the refactor's and the feature's quality laps each review from their own base
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      When the process is driven
+      Then the process rests at "refactor.build.quality.correctness.reviewing"
+      And the resting step's content contains the hash of the commit "gtd(agent): seam.note → refactor.deriving"
+      Given step "refactor.build.quality.correctness.reviewing" changes nothing
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234
@@ -1252,25 +1577,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [ ] ./src/calc.ts#1-2
           add built on the shared op
         """
-      And step "refactor.build.review.closing" runs its script
-
-    Scenario: the refactor's and the feature's quality laps each review from their own base
-      When the process is driven
-      Then the process rests at "refactor.build.quality.correctness.reviewing"
-      And the resting step's content contains the hash of the commit "gtd(agent): seam.note → refactor.deriving"
-      Given step "refactor.build.quality.correctness.reviewing" changes nothing
-      And step "implement.building" writes "src/calc.ts" with:
-        """
-        export const op = (a: number, b: number, sign: number) => a + sign * b
-        export const add = (a: number, b: number) => op(a, b, 1)
-        export const subtract = (a: number, b: number) => op(a, b, -1)
-        """
-      And step "implement.building" writes "src/acceptance.test.ts" with:
-        """
-        it("[AC-1] holds", () => {})
-        """
-      And step "implement.health.check" changes nothing
-      And step "implement.closing" runs its script
       When the process is driven
       Then the process rests at "refactor.build.review.await-review"
       Given a file ".gtd/REVIEW.md" with:
@@ -1284,6 +1590,19 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         - [x] ./src/calc.ts#1-2
           add built on the shared op
         """
+      Given step "implement.building" writes "src/calc.ts" with:
+        """
+        export const op = (a: number, b: number, sign: number) => a + sign * b
+        export const add = (a: number, b: number) => op(a, b, 1)
+        export const subtract = (a: number, b: number) => op(a, b, -1)
+        """
+      And step "implement.building" writes "src/acceptance.test.ts" with:
+        """
+        it("[AC-1] holds", () => {})
+        """
+      And step "implement.health.check" changes nothing
+      And step "implement.closing" runs its script
+      And step "refactor.build.review.closing" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "build.quality.correctness.reviewing"
@@ -1347,13 +1666,13 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
         [{"id":"shape","answer":"refactor-first","p":0.9}]
         """
-      And step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+
+    Scenario: a test-file stray is dropped from the derived refactor package
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
         """
         Seam: the existing code the strays touch.
         """
-
-    Scenario: a test-file stray is dropped from the derived refactor package
-      Given step "seam.check" changes nothing
+      And step "seam.check" changes nothing
       And step "seam.naive" writes "src/acceptance.test.ts" with:
         """
         it("[AC-1] holds", () => {})
@@ -1375,7 +1694,11 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And ".gtd/REFACTOR.md" does not contain "src/calc.test.ts"
 
     Scenario: the refactor updates an existing test's call sites to the seam's new shape
-      Given step "seam.check" changes nothing
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "seam.check" changes nothing
       And step "seam.naive" writes "src/acceptance.test.ts" with:
         """
         it("[AC-1] holds", () => {})
@@ -1396,11 +1719,15 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         import { add } from "./calc"
         it("adds", () => expect(add({ a: 1, b: 1 })).toBe(2))
         """
-      When the process is driven
+      When the process is driven leniently
       Then the process rests at "refactor.health.check"
 
     Scenario: the refactor may not drop an assertion from an existing test
-      Given step "seam.check" changes nothing
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "seam.check" changes nothing
       And step "seam.naive" writes "src/acceptance.test.ts" with:
         """
         it("[AC-1] holds", () => {})
@@ -1434,7 +1761,11 @@ Feature: the refactor is reviewed on its own before the feature is implemented
       And ".gtd/REFACTOR.md" does not exist
 
     Scenario: collected review headings re-derive at ### with the deepest capped at ######
-      Given step "seam.check" changes nothing
+      Given step "seam.note" writes ".gtd/REFACTOR-NOTE.md" with:
+        """
+        Seam: the existing code the strays touch.
+        """
+      And step "seam.check" changes nothing
       And step "seam.naive" writes "src/acceptance.test.ts" with:
         """
         it("[AC-1] holds", () => {})
@@ -1452,7 +1783,6 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         """
       And step "refactor.health.check" changes nothing
       And step "refactor.closing" runs its script
-      And step "refactor.build.review.carrying" runs its script
       And step "refactor.build.review.reviewing" writes ".gtd/REVIEW.md" with:
         """
         # Review: abc1234

@@ -8,7 +8,7 @@ Feature: the design gate always stops, threads get replies, open threads block m
   gate is refused until the human replies with a conclusion or deletes it.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """

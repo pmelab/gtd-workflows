@@ -10,13 +10,13 @@ Feature: a red check is re-run once before it reaches a person
     Given a gtd config with:
       """
       import { healthy } from "#workflow"
-      import { agent, human } from "@pmelab/gtd/flows"
+      import { agent, human, workflow } from "@pmelab/gtd/flows"
 
-      export const held = async () => {
+      export const held = workflow(async () => {
         await agent("first", "go")
         await healthy(() => agent("fix", "go"))
         await human("done")
-      }
+      })
       export default held
       """
     And step "first" writes "src/a.ts" with:

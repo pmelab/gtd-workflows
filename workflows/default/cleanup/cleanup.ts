@@ -1,14 +1,4 @@
-import {
-  agent,
-  changes,
-  glob,
-  read,
-  refuse,
-  scope,
-  start,
-  settings,
-  workflow,
-} from "@pmelab/gtd/flows"
+import { agent, changes, glob, read, refuse, scope, start, settings } from "@pmelab/gtd/flows"
 import { flagShipped } from "../shared/options.js"
 import { flagReferences, registryEntry, requireFlag } from "../shared/registry.js"
 import { coder } from "../shared/steps.js"
@@ -17,7 +7,7 @@ import { handOffTail, refusePendingHandOff } from "../shared/tail.js"
 const removingPrompt = (name: string, registry: string): string =>
   `Clean up the release flag "${name}", which is default-on: delete its entry in ${registry}, and remove every \`GTD_FLAG_${name.toUpperCase()}\` check from the shipped sources. Keep the flag-on path; delete code only the off path reached, including tests that pin the off path.`
 
-export const cleanupFlow = workflow(async (): Promise<void> => {
+export const cleanupFlow = async (): Promise<void> => {
   const registry = settings.flagRegistry ?? ""
   const name = settings.flag ?? ""
   // Before the turn, never after: replay re-runs every pre-turn check.
@@ -57,6 +47,6 @@ export const cleanupFlow = workflow(async (): Promise<void> => {
     scanned = true
   })
   await handOffTail(false, start(), guard)
-})
+}
 
 export const cleanup = flagShipped(cleanupFlow, "cleanup")

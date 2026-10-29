@@ -10,7 +10,7 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
   `## Quality lap` chunk, what became of every finding.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And a file "src/calc.ts" with:
       """
@@ -73,25 +73,12 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
 
       Should subtract round? The criterion does not say.
       """
-    And step "build.quality.sorting" runs its script
-    And step "build.quality.gating" runs its script
-    And step "build.quality.picking" runs its script
-    And step "build.quality.closing" runs its script
-    And step "build.review.carrying" runs its script
-    And step "build.health.check" changes nothing
-    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
-      """
-      # Review: abc1234
-
-      <!-- base: 0000000 -->
-
-      ## Subtract
-
-      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
-      """
 
   Scenario: a mechanical finding is fixed, the rest wait at the finding gate, and an untouched gate drops them
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.sorting" runs its script
+    And step "build.quality.gating" runs its script
+    And step "build.health.check" changes nothing
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
@@ -123,6 +110,18 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       A class would read better.
 
       - [ ] fix
+      """
+    And step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
     When gtd lands
     And the process is driven
@@ -167,7 +166,8 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a ticked note is fixed with the human's guidance, never re-planned
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
@@ -205,6 +205,7 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
 
       - [ ] fix
       """
+    And step "build.quality.picking" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.fix.quality.fixing"
@@ -225,6 +226,18 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       export const subtract = (a: number, b: number) => Math.round(a - b)
       """
     And step "build.fix.quality.fixing" deletes ".gtd/QUALITY.md"
+    And step "build.review.carrying" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
     When the process is driven
     Then the process rests at "build.review.await-review"
     And ".gtd/REVIEW.md" contains:
@@ -251,11 +264,11 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a finding the judge called noise is rescued by its tick
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"noise","p":0.8}]
       """
-    And step "build.fix.quality.fixing" deletes ".gtd/QUALITY.md"
     When the process is driven
     Then the process rests at "build.quality.gate"
     Given a file ".gtd/QUALITY.md" with:
@@ -282,6 +295,20 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
 
       - [ ] fix
       """
+    Given step "build.fix.quality.fixing" deletes ".gtd/QUALITY.md"
+    And step "build.quality.picking" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -300,7 +327,8 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: guidance under an unticked box is refused
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
@@ -322,11 +350,11 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     And landing is refused with "has guidance under an unticked box — tick it to fix the finding, or delete the text to drop it"
 
   Scenario: a ticked finding the fix cap leaves is listed unresolved, with no second gate
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
-    And step "build.fix.quality.fixing" changes nothing
     When the process is driven
     Then the process rests at "build.quality.gate"
     Given a file ".gtd/QUALITY.md" with:
@@ -338,6 +366,21 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       Should subtract round? The criterion does not say.
 
       - [x] fix
+      """
+    Given step "build.fix.quality.fixing" changes nothing
+    And step "build.quality.picking" runs its script
+    And step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
     When gtd lands
     And the process is driven
@@ -363,7 +406,19 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a lap whose every finding was fixed has no gate
-    Given judge step "build.quality.triage" answers:
+    Given step "build.review.carrying" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"mechanical","p":0.9},{"id":"Q3","answer":"mechanical","p":0.9}]
       """
@@ -374,7 +429,21 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     And ".gtd/REVIEW.md" contains "- AC-1 ignores floating point ("
 
   Scenario: a risk is fixed before the human sees the review, re-reviewed in the reviewer's own draft
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.sorting" runs its script
+    And step "build.quality.gating" runs its script
+    And step "build.quality.closing" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
@@ -396,6 +465,7 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     Given step "build.review.reviewing" is no longer scripted
     And step "build.review.reviewing" replaces the text "Risk: overflows on large numbers" in ".gtd/REVIEW.md" with "subtract(a, b), now guarded"
     And step "build.review.fix.risks.fixing" changes nothing
+    And step "build.review.carrying" runs its script
     When the process is driven
     Then the process rests at "build.review.await-review"
     And ".gtd/REVIEW.md" contains "subtract(a, b), now guarded"
@@ -412,7 +482,8 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: an unsure verdict makes a finding a note, never a fix or a drop
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.5},{"id":"Q2","answer":"noise","p":0.6}]
       """
@@ -431,7 +502,9 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a mechanical finding the fix cap leaves reaches the gate as unresolved
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And step "build.health.check" changes nothing
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"mechanical","p":0.9},{"id":"Q3","answer":"mechanical","p":0.9}]
       """
@@ -464,6 +537,18 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       gtd(check): build.health.check → build.quality.gating
       gtd(check): build.quality.gating → build.quality.gate
       """
+    And step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -476,7 +561,9 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a fixer that renames a chunk it leaves counts nothing fixed
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And step "build.health.check" changes nothing
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"mechanical","p":0.9},{"id":"Q3","answer":"mechanical","p":0.9}]
       """
@@ -495,7 +582,20 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     And ".gtd/QUALITY.md" contains "check whether it was fixed"
 
   Scenario: prose the fixer leaves outside every chunk does not hide its fixes
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.health.check" changes nothing
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"mechanical","p":0.9},{"id":"Q3","answer":"mechanical","p":0.9}]
       """
@@ -511,14 +611,27 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
     And ".gtd/REVIEW.md" does not contain "check whether it was fixed"
 
   Scenario: signing off the review ends the process
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
+      """
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.9},{"id":"Q3","answer":"noise","p":0.9}]
       """
     And step "build.quality.gate" changes nothing
-    And step "build.review.closing" runs its script
     When the process is driven
     Then the process rests at "build.review.await-review"
+    Given step "build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "idle"
@@ -532,7 +645,8 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       """
 
   Scenario: a finding whose entry the human deleted is listed as dropped
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.gating" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"noise","p":0.9},{"id":"Q2","answer":"noise","p":0.85},{"id":"Q3","answer":"design","p":0.8}]
       """
@@ -549,6 +663,18 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
       A class would read better.
 
       - [ ] fix
+      """
+    And step "build.quality.closing" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## Subtract
+
+      - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
     When gtd lands
     And the process is driven

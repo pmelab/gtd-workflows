@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { installContext } from "@pmelab/gtd/flows"
+import { installContext } from "@pmelab/gtd/testkit"
 import { sectionBodies } from "@pmelab/gtd/steering"
 import { findingsOf } from "./lenses.js"
 import { fixtureContext } from "./text.fixture.js"

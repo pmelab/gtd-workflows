@@ -12,14 +12,14 @@ Feature: health.judge never manufactures "identical" from two unusably-cut tails
     Given a gtd config with:
       """
       import { healthy } from "#workflow"
-      import { agent, human } from "@pmelab/gtd/flows"
+      import { agent, human, workflow } from "@pmelab/gtd/flows"
 
-      export const defaults = { judgeIdenticalMinP: "0.7", judgeBudgetBytes: "32768" }
-      export const held = async () => {
+      const defaults = { judgeIdenticalMinP: "0.7", judgeBudgetBytes: "32768" }
+      export const held = workflow(async () => {
         await agent("first", "go")
         await healthy(() => agent("fix", "go"))
         await human("done")
-      }
+      }, { defaults })
       export default held
       """
     And step "first" writes "src/attempt.ts" with:

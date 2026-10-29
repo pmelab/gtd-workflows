@@ -6,7 +6,7 @@ Feature: planning and coding turns take their models from env.plannerModel and e
   once.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And step "unwind" changes nothing
     And step "start-gate.check" changes nothing
 

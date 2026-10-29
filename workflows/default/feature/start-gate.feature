@@ -9,7 +9,7 @@ Feature: the green-baseline start gate runs the suite before a process builds
   once the human repairs the failures.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And step "unwind" runs its script
 
   Scenario: a red baseline halts at start-gate.blocked, then a fix re-runs the gate to green

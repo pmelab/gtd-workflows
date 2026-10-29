@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest"
 import {
   hasThreadFor,
-  installContext,
   requireReplies,
   requireThreadsClosed,
   type CodeThreadInfo,
   type ThreadInfo,
 } from "@pmelab/gtd/flows"
+import { installContext } from "@pmelab/gtd/testkit"
 
 const withThreads = (
   list: readonly ThreadInfo[],

@@ -7,7 +7,7 @@ Feature: the health check runs "testCommand"
   `GTD_TESTCOMMAND` override it.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """

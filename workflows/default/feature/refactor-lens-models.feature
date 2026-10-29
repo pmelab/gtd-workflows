@@ -2,7 +2,7 @@
 Feature: the refactor review's lenses take their model hints from refactorQualityReviews alone
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness=base"
     And the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness, conventions=opus"
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"

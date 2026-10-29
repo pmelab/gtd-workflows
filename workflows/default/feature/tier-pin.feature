@@ -5,7 +5,7 @@ Feature: a process keeps the risk tier setting it started with when GTD_FLAG_RIS
   changes whether the process asks for and records a risk tier.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """

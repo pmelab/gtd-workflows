@@ -2,21 +2,24 @@
 Feature: a gtd.config.ts builds on the shipped workflows by importing them
 
   The workflow module's default export (`feature`) is the ordinary start, and
-  its phases, steps, `defaults`, `summary`, `base`, `steering` and `skills`
-  are named exports. A workflow of its own can re-export what it keeps and
-  compose the rest, and the steps it reuses keep their full names — `skills`
-  included, since dropping it from the re-export list silently empties every
-  reused step's skill list instead of keeping the shipped defaults.
+  its phases, steps and `workflowOptions` — the settings, summary, steering
+  files, skills and access every shipped workflow carries — are named exports.
+  A workflow of its own composes the phases and passes `workflowOptions` to
+  gtd's `workflow()`, and the steps it reuses keep their full names and the
+  shipped skill lists.
 
   Background:
     Given a gtd config with:
       """
-      import { start } from "@pmelab/gtd/flows"
-      import { afterTail, buildTail } from "#workflow"
+      import { start, workflow } from "@pmelab/gtd/flows"
+      import { afterTail, buildTail, workflowOptions } from "#workflow"
 
-      export { feature as default, defaults, envDefaults, summary, base, steering, skills } from "#workflow"
+      export { feature as default } from "#workflow"
 
-      export const hotfix = async () => afterTail(await buildTail(start(), { fixFirst: true }))
+      export const hotfix = workflow(
+        async () => afterTail(await buildTail(start(), { fixFirst: true })),
+        workflowOptions,
+      )
       """
 
   Scenario: an ordinary start runs the shipped flow, resting at its idle step
@@ -37,11 +40,11 @@ Feature: a gtd.config.ts builds on the shipped workflows by importing them
     Then the last commit subject is "gtd(human): build.fix"
     And the last commit body contains "Gtd-Var: judgeBudgetBytes=65536"
 
-  Scenario: the re-exported skills export keeps scope build's shipped skill list
+  Scenario: the shipped workflow options keep scope build's shipped skill list
     When gtd starts workflow "hotfix"
     Then the output of gtd "next --json=skills" contains "\"debugging-and-error-recovery\""
 
-  Scenario: a config skills entry addresses scope build through the re-exported skills
+  Scenario: a config skills entry addresses scope build through the shipped workflow options
     Given the gtd config ends with:
       """
       export const config = { skills: { build: ["my-org-runbook"] } }

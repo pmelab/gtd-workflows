@@ -7,7 +7,7 @@ Feature: a trivial change takes the same few beats at either risk tier
   the summary differs.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And the environment variable "GTD_FLAG_RISK_TIER" is "1"
     And a file "src/greeting.ts" with:
@@ -24,9 +24,6 @@ Feature: a trivial change takes the same few beats at either risk tier
     And step "unwind" changes nothing
     And step "start-gate.check" changes nothing
     And step "design.gate.answer" changes nothing
-    And step "implement.health.check" changes nothing
-    And step "implement.closing" runs its script
-    And step "build.quality.correctness.reviewing" changes nothing
 
   Scenario Outline: a one-line fix runs from idle to the review gate with the same beats at either tier
     Given step "design.triage" writes ".gtd/REQUIREMENTS.md" with:
@@ -67,6 +64,9 @@ Feature: a trivial change takes the same few beats at either risk tier
       [{"id":"shape","answer":"land","p":0.9}]
       """
     And step "implement.applying" runs its script
+    Given step "implement.health.check" changes nothing
+    And step "implement.closing" runs its script
+    And step "build.quality.correctness.reviewing" changes nothing
     When the process is driven
     Then the process rests at "build.review.reviewing"
     And "src/greeting.ts" contains "Hello, world"

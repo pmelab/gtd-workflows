@@ -99,9 +99,14 @@ function writeOxfmtConfig(repo) {
 // step is reached through the evals' own workflow; GTD_EVAL_WORKFLOW names a
 // different gtd.config.ts to use instead.
 const EVAL_WORKFLOW = join(HERE, "gtd.config.ts")
+const BUNDLE = join(HERE, "..", "dist", "default.mjs")
 function writeEvalWorkflowConfig(repo) {
   const source = readFileSync(process.env.GTD_EVAL_WORKFLOW || EVAL_WORKFLOW, "utf-8")
-  writeFileSync(join(repo, "gtd.config.ts"), source)
+  // The fixture lives elsewhere: point the config's relative bundle import at this checkout's.
+  writeFileSync(
+    join(repo, "gtd.config.ts"),
+    source.replaceAll('"../dist/default.mjs"', JSON.stringify(BUNDLE)),
+  )
 }
 
 /**

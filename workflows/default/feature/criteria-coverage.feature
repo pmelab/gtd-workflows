@@ -6,7 +6,7 @@ Feature: the criteria-coverage lens checks the change's tests against its criter
   criterion no test exercises. Its findings are triaged like any other lens's.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is "criteria-coverage"
     And a file "src/calc.ts" with:
       """

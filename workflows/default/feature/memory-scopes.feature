@@ -6,7 +6,7 @@ Feature: each phase of the shipped workflow is its own conversation
   inside build its own again.
 
   Scenario: design and seam are separate conversations
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And a file "NOTE.md" with:
       """
       a sketch
@@ -34,7 +34,7 @@ Feature: each phase of the shipped workflow is its own conversation
     And the output of gtd "next --json=memory" contains "seam#"
 
   Scenario: the build tail and its review are separate conversations
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """

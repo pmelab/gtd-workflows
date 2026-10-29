@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
-import type { StepRequest } from "@pmelab/gtd/flows"
+import type { StepRequest } from "@pmelab/gtd/testkit"
 import { captureStep } from "../shared/text.fixture.js"
 import * as steps from "./steps.js"
 

@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
-import {
-  installContext,
-  type Change,
-  type FlowContext,
-  type KeptTip,
-  type StepRequest,
-} from "@pmelab/gtd/flows"
+import { type Change, type KeptTip } from "@pmelab/gtd/flows"
+import { installContext, type FlowContext, type StepRequest } from "@pmelab/gtd/testkit"
 import { globMatches } from "@pmelab/gtd/wire"
 import { fixtureContext } from "../shared/text.fixture.js"
 import {

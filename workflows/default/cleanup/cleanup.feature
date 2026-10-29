@@ -5,19 +5,10 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
   then the shared health loop and review run; the same checks re-run after every later agent turn. A review note ends the process.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And a gtd config with:
       """
-      export {
-        feature as default,
-        feature,
-        defaults,
-        envDefaults,
-        summary,
-        steering,
-        skills,
-        access,
-      } from "#workflow/feature"
+      export { feature as default, feature } from "#workflow/feature"
       import { cleanup } from "#workflow"
       export { cleanup }
       """
@@ -41,7 +32,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       """
       export const on = true
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     Then driving the process is refused with "src/flags/index.ts still declares flag \"live\""
 
   Scenario: a turn leaving the env var in a shipped source is refused naming path:line
@@ -51,7 +42,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
         { name: "alpha", owner: "a", expiry: "2027-01-01", kind: "release" },
       ] as const
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     Then driving the process is refused with "src/calc.ts:1 still names GTD_FLAG_LIVE"
 
   Scenario: the same env var in a test file is allowed
@@ -71,12 +62,12 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       export const on = true
       """
     And step "build.health.check" changes nothing
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     And the process is driven
     Then the process rests at "build.review.reviewing"
 
   @inmem
-  Scenario: gtd door cleanup starts the cleanup of its flag argument and reaches the review
+  Scenario: gtd start cleanup starts the cleanup of its flag argument and reaches the review
     Given step "cleanup.removing" writes "src/flags/index.ts" with:
       """
       export const FLAGS = [
@@ -93,8 +84,8 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
     Then the process rests at "build.review.reviewing"
 
   @inmem
-  Scenario: gtd door cleanup with no argument is refused naming the flag
-    Then opening door "cleanup" is refused with "usage: gtd door cleanup <flag>"
+  Scenario: gtd start cleanup with no argument is refused naming the flag
+    Then opening door "cleanup" is refused with "usage: gtd start cleanup <flag>"
 
   @inmem
   Scenario: a fix after a red suite that restores the registry entry is refused
@@ -108,8 +99,8 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       """
       export const on = true
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
-    And the process is driven
+    When gtd starts workflow "cleanup" with "live"
+    And the process is driven leniently
     Then the process rests at "build.health.check"
 
     Given a file ".gtd/FEEDBACK.md" with:
@@ -140,8 +131,8 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       """
       export const on = true
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
-    And the process is driven
+    When gtd starts workflow "cleanup" with "live"
+    And the process is driven leniently
     Then the process rests at "build.health.check"
 
     Given a file ".gtd/FEEDBACK.md" with:
@@ -169,8 +160,8 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       """
       export const on = true
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
-    And the process is driven
+    When gtd starts workflow "cleanup" with "live"
+    And the process is driven leniently
     Then the process rests at "build.health.check"
 
     Given a file ".gtd/FEEDBACK.md" with:
@@ -219,7 +210,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
         { name: "live", owner: "d", expiry: "2027-04-01", kind: "release", defaultOn: true },
       ] as const
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     Then driving the process is refused with "still declares flag \"live\""
 
   @inmem
@@ -246,7 +237,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       - [ ] ./src/calc.ts#1-1
         fine
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     And the process is driven
     Then the process rests at "build.review.await-review"
 
@@ -283,7 +274,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       - [ ] ./src/calc.ts#1-1
         flag removed
       """
-    When gtd starts workflow "cleanup" with "--var flag=live"
+    When gtd starts workflow "cleanup" with "live"
     And the process is driven
     Then the process rests at "build.review.await-review"
 
@@ -306,10 +297,10 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
     And ".gtd/REVIEW.orig.md" contains "flag removed"
 
   Scenario: a default-off flag is refused at start
-    Then starting workflow "cleanup" with "--var flag=alpha" is refused with "flag \"alpha\" is not default-on — roll it out first"
+    Then starting workflow "cleanup" with "alpha" is refused with "flag \"alpha\" is not default-on — roll it out first"
 
   Scenario: an unknown flag is refused at start
-    Then starting workflow "cleanup" with "--var flag=nope" is refused with "no flag \"nope\" in src/flags/index.ts"
+    Then starting workflow "cleanup" with "nope" is refused with "no flag \"nope\" in src/flags/index.ts"
 
   Scenario: a non-release flag is refused at start
-    Then starting workflow "cleanup" with "--var flag=ops1" is refused with "flag \"ops1\" is ops, not release"
+    Then starting workflow "cleanup" with "ops1" is refused with "flag \"ops1\" is ops, not release"

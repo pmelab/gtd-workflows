@@ -19,8 +19,8 @@ describe("gate guard", () => {
   const config = (guard: string) =>
     [
       `import { gate } from "#workflow"`,
-      `import { agent, refuse } from "@pmelab/gtd/flows"`,
-      `export const held = async () => { await agent("first", "go"); ${guard}; await gate("suite", "fix it", guard) }`,
+      `import { agent, refuse, workflow } from "@pmelab/gtd/flows"`,
+      `export const held = workflow(async () => { await agent("first", "go"); ${guard}; await gate("suite", "fix it", guard) })`,
       `export default held`,
     ].join("\n")
 
@@ -57,10 +57,10 @@ describe("healthy describeGuard", () => {
   const config = (options: string) =>
     [
       `import { healthy } from "#workflow"`,
-      `import { agent, read, refuse } from "@pmelab/gtd/flows"`,
+      `import { agent, read, refuse, workflow } from "@pmelab/gtd/flows"`,
       `const describeGuard = () => { refuse("describe-guarded: nope") }`,
       `const guard = () => { refuse("guarded: nope") }`,
-      `export const held = async () => { await agent("first", "go"); await healthy(() => agent("fix", "go"), ${options}) }`,
+      `export const held = workflow(async () => { await agent("first", "go"); await healthy(() => agent("fix", "go"), ${options}) })`,
       `export default held`,
     ].join("\n")
 
@@ -127,9 +127,9 @@ describe("healthy at the fix cap", () => {
     const repo = testRepo({
       workflow: [
         `import { healthy } from "#workflow"`,
-        `import { agent } from "@pmelab/gtd/flows"`,
-        `export const defaults = { judgeIdenticalMinP: "0.7"${extra} }`,
-        `export const held = async () => { await agent("first", "go"); await healthy(() => agent("fix", "go")) }`,
+        `import { agent, workflow } from "@pmelab/gtd/flows"`,
+        `const defaults = { judgeIdenticalMinP: "0.7"${extra} }`,
+        `export const held = workflow(async () => { await agent("first", "go"); await healthy(() => agent("fix", "go")) }, { defaults })`,
         `export default held`,
       ].join("\n"),
       env: { GTD_TEST_COMMAND: "true" },

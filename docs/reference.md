@@ -13,41 +13,33 @@ Examples import the workflow from its pinned bundle, as the config
 
 ## Using it in `gtd.config.ts`
 
-The bundle exports the workflow's factories, its parts and the reserved exports
-(`defaults`, `envDefaults`, `summary`, `base`, `steering`, `skills`, `access`).
-The startable workflows are [factories](#factory-options) (`feature`, `review`,
-`fix`, `rollout`, `cleanup`) and plain flows marked with gtd's `workflow()`
-(`ordinaryStart`, `reviewFlow`, `fixFlow`, `rolloutFlow`, `cleanupFlow`); the
-phases (`unwind`, `planAndBuild`, `design`, `buildFeature`, `seamBuild`,
-`implement`, `refactorFirst`, `buildTail`, `handOffTail`, `handOffReview`,
-`fixReviewNotes`, `qualityLap`, `healthy`, `gate`, …) and every single step
-(`triage`, `naivePass`, `fixCheck`, `reviewing`, `collecting`, …) are named
-exports too. A step's name is relative to the `scope()` it runs in — the
-workflow's `scope("build", …)` around `healthy` is what makes
-`build.health.check`. The full step names are this workflow's public API: a
-rename strands every process resting on the old name, so it only happens in a
-breaking release of this repository.
+The bundle exports the workflow's factories, its parts and `workflowOptions`.
+The startable workflows are its [factories](#factory-options) (`feature`,
+`review`, `fix`, `rollout`, `cleanup`). Everything else is a plain function: the
+flows the factories wrap (`ordinaryStart`, `reviewFlow`, `fixFlow`,
+`rolloutFlow`, `cleanupFlow`), the phases (`unwind`, `planAndBuild`, `design`,
+`buildFeature`, `seamBuild`, `implement`, `refactorFirst`, `buildTail`,
+`handOffTail`, `handOffReview`, `fixReviewNotes`, `qualityLap`, `healthy`,
+`gate`, …) and every single step (`triage`, `naivePass`, `fixCheck`,
+`reviewing`, `collecting`, …). gtd starts only what a config passes through its
+`workflow()` or a factory, so none of them is startable on its own, re-exported
+or not. A step's name is relative to the `scope()` it runs in — the workflow's
+`scope("build", …)` around `healthy` is what makes `build.health.check`. The
+full step names are this workflow's public API: a rename strands every process
+resting on the old name, so it only happens in a breaking release of this
+repository.
 
 A factory carries its settings, skills, access, steering files and summary
-itself, so a config exporting only factories needs none of the reserved exports:
-`export default feature()` is a whole config.
+itself: `export default feature()` is a whole config.
 
-A plain flow carries nothing. A config that starts one of its own re-exports the
-reserved names it needs. Re-export `envDefaults` alongside `defaults`: a
-workflow that re-exports only `defaults` loses `testCommand`, `plannerModel` and
-`coderModel`. Re-export `skills` alongside `steering`: it is what makes the
-workflow's scope names addressable by a `config.skills` entry in THIS config
-(see [Skills and access](#skills-and-access)) — dropping it from the re-export
-list, the way dropping any other named export does, silently empties it instead
-of keeping the workflow's defaults, because gtd reads a missing export as `{}`.
-
-**Import the phases; never `export *` them.** An exported function of your file
-is a startable workflow, so `export *` from the bundle would turn each phase and
-step into one — `gtd start buildTail` would start a half-flow and strand the
-process. Re-export the reserved names and the workflows you want startable by
-name, and write each other workflow you want as your own function, marked with
-`workflow()` — once one export is marked, gtd warns about every exported
-function that is not:
+A flow of your own carries what you pass to gtd's `workflow(flow, options)`.
+`workflowOptions` is what every factory carries — `defaults`, `envDefaults`,
+`summary`, `steering`, `skills` and `access` — so
+`workflow(flow, workflowOptions)` runs the reused phases with the shipped
+settings (`testCommand`, `plannerModel`, `coderModel`, …) and skill lists, and
+makes the workflow's scope names addressable by a `config.skills` entry in your
+config (see [Skills and access](#skills-and-access)). Spread it to add a base or
+doors of your own:
 
 ```ts
 import { start, workflow } from "@pmelab/gtd/flows"
@@ -55,24 +47,37 @@ import {
   afterTail,
   buildTail,
   feature,
-} from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
-
-export {
-  defaults,
-  envDefaults,
-  summary,
-  steering,
-  skills,
+  workflowOptions,
 } from "/home/me/.local/share/gtd/workflows/dist/default.mjs"
 
 export default feature
 
-export const hotfix = workflow(async () =>
-  afterTail(await buildTail(start(), { fixFirst: true })),
+export const hotfix = workflow(
+  async () => afterTail(await buildTail(start(), { fixFirst: true })),
+  workflowOptions,
 )
 
-export const doors = { hotfix: { workflow: "hotfix" } }
+export const audit = workflow(async () => afterTail(await buildTail(start())), {
+  ...workflowOptions,
+  base: (_workflow, vars) => vars.reviewBase ?? "",
+})
 ```
+
+```bash
+gtd start audit --var reviewBase=main
+```
+
+A config exports no `defaults`, `envDefaults`, `summary`, `base`, `steering`,
+`skills`, `access` or `doors` of its own: gtd refuses to load one that does, and
+the bundle exports none of them.
+
+**Upgrading:** a config re-exporting the bundle's `defaults`, `envDefaults`,
+`summary`, `base`, `steering`, `skills`, `access` or `doors` fails to load —
+delete the re-export and pass `workflowOptions` to the `workflow()` of each flow
+of your own; a factory needs nothing. An exported plain function, `fixFlow` and
+the other `*Flow`s included, is no longer startable: wrap it,
+`export const myFix = workflow(() => fixFlow(), workflowOptions)`, or export the
+factory.
 
 `buildTail(base, options?)` is the call form;
 `buildTail(fixFirst, base, green?, options?)` is deprecated. A string second
@@ -97,13 +102,11 @@ and all.
 is deprecated; a function second argument selects it. A call fitting neither
 form is rejected before any step runs.
 
-A config's doors are those its workflows bring plus its `doors` export: export
-`fix` and `review` to keep their doors, `rollout` and `cleanup` to add theirs
-(see gtd's configuration,
-[Doors](https://github.com/pmelab/gtd/blob/main/docs/configuration.md#doors)).
-The bundle's own `doors` export is an empty no-op, and its `base` export maps
-`reviewBase` for a workflow named `review`; both are kept only so an older
-config re-exporting them still loads.
+A config's doors are those its workflows bring: export `fix` and `review` to
+keep their doors, `rollout` and `cleanup` to add theirs (see gtd's
+configuration,
+[Doors](https://github.com/pmelab/gtd/blob/main/docs/configuration.md#doors)). A
+flow of your own declares its doors in its `workflow()` options.
 
 ### Factory options
 
@@ -137,7 +140,8 @@ Unknown options are rejected, not dropped, so a misspelled or removed option
 fails the load.
 
 Awaiting a factory's call inside a composed flow throws — compose `fixFlow`,
-`reviewFlow` and the other plain flows instead.
+`reviewFlow` and the other plain flows instead, inside a `workflow()` of your
+own.
 
 ## The workflows
 
@@ -842,8 +846,8 @@ a parent reaches every scope beneath it that sets none. The group scopes
 `build.fix`, `build.review.fix`, `build.quality`, `refactor.fix` and
 `implement.fix` run no turn and carry no key, nor do `seam.judge`, `seam.steer`
 and `seam.by-hand`. A custom workflow's own scopes are addressable through its
-own `skills` export (see
-[Using it in `gtd.config.ts`](#using-it-in-gtdconfigts)); the export may be a
+own `skills` option — `workflow(flow, { skills })` (see
+[Using it in `gtd.config.ts`](#using-it-in-gtdconfigts)); the option may be a
 function of the resolved vars, and must list every scope holding an agent step.
 The type can check an entry's VALUE (an array of strings) but never its KEY,
 since scope names come from the workflow actually in play — there is no editor
@@ -1166,7 +1170,7 @@ Refusals, each exiting non-zero with the text on stderr:
 
 | Text                                                                                           | When                                                                            |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `gtd: <workflow> needs --var flag=<name>`                                                      | no `flag` var                                                                   |
+| `gtd: <workflow> needs a flag: gtd start <workflow> <flag>`                                    | an empty flag, or no `flag` var on a workflow started by another name           |
 | `gtd start <rollout\|cleanup>: missing arguments — usage: gtd start <rollout\|cleanup> <flag>` | `gtd start rollout` or `gtd start cleanup` with no flag                         |
 | `gtd: <workflow>: no flag "<name>" in <registry>`                                              | name not in the registry                                                        |
 | `gtd: <workflow>: flag "<name>" is <kind>, not release`                                        | not a release flag                                                              |

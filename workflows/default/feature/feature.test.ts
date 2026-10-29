@@ -67,13 +67,13 @@ const naivePlanned = () => {
 
 describe("afterTail feedback lap", () => {
   const TAIL = [
-    `import { start } from "@pmelab/gtd/flows"`,
-    `import { afterTail, buildTail, gate } from "#workflow"`,
-    `export { feature as default, defaults, envDefaults, summary, base, steering, skills, access } from "#workflow"`,
-    `export async function tail() {`,
+    `import { start, workflow } from "@pmelab/gtd/flows"`,
+    `import { afterTail, buildTail, gate, workflowOptions } from "#workflow"`,
+    `export { feature as default } from "#workflow"`,
+    `export const tail = workflow(async () => {`,
     `  await gate("review-gate", "The baseline is red.")`,
     `  return afterTail(await buildTail(start()))`,
-    `}`,
+    `}, workflowOptions)`,
   ].join("\n")
 
   const feedbackLap = async () => {
@@ -208,20 +208,24 @@ describe("an in-flight 28.0.0 naive-pass process", () => {
   /** The repo at the judge's rest, then `trail` forged edge by edge as `Gtd-Step:` commits. */
   const forged = async (trail: readonly Edge[], upTo: number) => {
     const repo = naivePlanned()
-    await repo.drive({
-      unwind: () => undefined,
-      "start-gate.check": () => undefined,
-      "design.triage": (_, r) =>
-        r.write(
-          ".gtd/REQUIREMENTS.md",
-          "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
-        ),
-      "design.gate.answer": () => undefined,
-      "seam.naive": (_, r) => {
-        r.write("src/calc.ts", `${CALC}// naive\n`)
-        r.write("src/calc.test.ts", ACCEPTANCE)
+    await repo.drive(
+      {
+        unwind: () => undefined,
+        "start-gate.check": () => undefined,
+        "design.triage": (_, r) =>
+          r.write(
+            ".gtd/REQUIREMENTS.md",
+            "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
+          ),
+        "design.gate.answer": () => undefined,
+        "seam.naive": (_, r) => {
+          r.write("src/calc.ts", `${CALC}// naive\n`)
+          r.write("src/calc.test.ts", ACCEPTANCE)
+        },
       },
-    })
+      // Rests at seam.check on purpose: the trail is forged from there.
+      { strict: false },
+    )
     const kept = /Gtd-Kept: (\w+)/.exec(repo.messages().at(-1)!)![1]!
     const seen: Record<string, number> = {
       "seam.naive": 1,
@@ -308,22 +312,26 @@ describe("release flag", () => {
     repo.write("src/calc.ts", CALC)
     repo.commit("feat: add calculator")
     repo.write("TODO.md", "# Add subtract\n")
-    const rest = await repo.drive({
-      unwind: () => undefined,
-      "start-gate.check": () => undefined,
-      "design.triage": (_, r) =>
-        r.write(
-          ".gtd/REQUIREMENTS.md",
-          "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
-        ),
-      "design.gate.answer": () => undefined,
-      "seam.naive": (_, r) => {
-        r.write("src/calc.ts", `${CALC}// naive\n`)
-        r.write("src/calc.test.ts", ACCEPTANCE)
+    const rest = await repo.drive(
+      {
+        unwind: () => undefined,
+        "start-gate.check": () => undefined,
+        "design.triage": (_, r) =>
+          r.write(
+            ".gtd/REQUIREMENTS.md",
+            "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
+          ),
+        "design.gate.answer": () => undefined,
+        "seam.naive": (_, r) => {
+          r.write("src/calc.ts", `${CALC}// naive\n`)
+          r.write("src/calc.test.ts", ACCEPTANCE)
+        },
+        "seam.check": () => undefined,
+        "implement.applying": runsItsScript,
       },
-      "seam.check": () => undefined,
-      "implement.applying": runsItsScript,
-    })
+      // Rests at the check on purpose: the naive pass has just landed.
+      { strict: false },
+    )
     expect(rest.state).toBe("implement.health.check")
     expect(repo.read("src/calc.ts")).toBe(`${CALC}// naive\n`)
     expect(repo.subjects().some((subject) => subject.includes("seam.judge"))).toBe(false)

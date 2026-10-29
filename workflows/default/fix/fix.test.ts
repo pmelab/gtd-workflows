@@ -48,14 +48,18 @@ describe("the fix workflow", () => {
       },
     })
     await repo.door("fix")
-    const rest = await repo.drive({
-      "notes.fixing": (beat, r) => {
-        expect(beat.content).toContain("rename it to sum")
-        expect(beat.content).toContain("Risk: drops the carry")
-        r.write("src/calc.ts", CALC.replace("add", "sum"))
+    const rest = await repo.drive(
+      {
+        "notes.fixing": (beat, r) => {
+          expect(beat.content).toContain("rename it to sum")
+          expect(beat.content).toContain("Risk: drops the carry")
+          r.write("src/calc.ts", CALC.replace("add", "sum"))
+        },
+        "notes.closing": runsItsScript,
       },
-      "notes.closing": runsItsScript,
-    })
+      // Rests at the check on purpose: the test ends where the fix hands over to health.
+      { strict: false },
+    )
     expect(rest.state).toBe("build.health.check")
     expect(repo.subjects().slice(1)).toEqual([
       "gtd(human): notes.fixing",

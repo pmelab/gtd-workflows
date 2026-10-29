@@ -10,7 +10,7 @@ Feature: the review learns standards from the human's answers
   wording.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
@@ -67,16 +67,8 @@ Feature: the review learns standards from the human's answers
 
       - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
-    And step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And step "build.review.standards.raising" runs its script
 
   Scenario: a won't-fix the judge calls reusable is kept, and the review signs off
-    Given judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.9}]
-      """
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -92,7 +84,13 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] won't fix" in ".gtd/REVIEW.md" is replaced with "- [x] won't fix"
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.9}]
+      """
+    And step "build.review.closing" runs its script
+    And step "build.review.standards.recording" runs its script
+    When the process is driven
     Then the process rests at "idle"
     And ".gtd/STANDARDS.md" contains:
       """
@@ -107,20 +105,6 @@ Feature: the review learns standards from the human's answers
       """
 
   Scenario: the next review lists the standards added
-    Given judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.9}]
-      """
-    And judge step "build.review.triage" answers:
-      """
-      [{"id":"answer-1","answer":"nit","p":0.9}]
-      """
-    And step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
-      """
-      export function add(a: number, b: number) { return a + b }
-      export function subtract(a: number, b: number) { return a - b }
-      """
-    And step "build.health.check" changes nothing
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -136,7 +120,24 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] _your answer_" in ".gtd/REVIEW.md" is replaced with "- [x] Calculators are plain functions."
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.9}]
+      """
+    And judge step "build.review.triage" answers:
+      """
+      [{"id":"answer-1","answer":"nit","p":0.9}]
+      """
+    And step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
+      """
+      export function add(a: number, b: number) { return a + b }
+      export function subtract(a: number, b: number) { return a - b }
+      """
+    And step "build.health.check" changes nothing
+    Given step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
+    And step "build.review.standards.recording" runs its script
+    When the process is driven
     Then the process rests at "build.review.await-review"
     And ".gtd/REVIEW.md" contains:
       """
@@ -148,10 +149,6 @@ Feature: the review learns standards from the human's answers
       """
 
   Scenario: an answer below the threshold is not kept
-    Given judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.6}]
-      """
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -167,7 +164,12 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] won't fix" in ".gtd/REVIEW.md" is replaced with "- [x] won't fix"
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.6}]
+      """
+    And step "build.review.closing" runs its script
+    When the process is driven
     Then the process rests at "idle"
     And ".gtd/STANDARDS.md" does not exist
 
@@ -185,8 +187,10 @@ Feature: the review learns standards from the human's answers
 
       Please add subtract(a, b).
       """
+    And from now on the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And step "seam.naive" is prompted with "- Won't fix: subtract has no class"
     And step "build.quality.correctness.reviewing" is prompted with "- Won't fix: subtract has no class"
+    And step "build.quality.correctness.reviewing" changes nothing
     When the process is driven
     Then the process rests at "build.review.await-review"
 
@@ -204,14 +208,6 @@ Feature: the review learns standards from the human's answers
 
       Please add subtract(a, b).
       """
-    And judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
-      """
-    And judge step "build.review.triage" answers:
-      """
-      [{"id":"answer-1","answer":"praise","p":0.9}]
-      """
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -227,7 +223,19 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] _your answer_" in ".gtd/REVIEW.md" is replaced with "- [x] Calculators are plain functions."
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
+      """
+    And judge step "build.review.triage" answers:
+      """
+      [{"id":"answer-1","answer":"praise","p":0.9}]
+      """
+    Given step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
+    And step "build.review.standards.recording" runs its script
+    And step "build.review.standards.raising" runs its script
+    When the process is driven
     Then the process rests at "build.review.await-review"
     And ".gtd/STANDARDS.md" contains:
       """
@@ -277,10 +285,6 @@ Feature: the review learns standards from the human's answers
 
       Please add subtract(a, b).
       """
-    And judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
-      """
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -296,7 +300,15 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] won't fix" in ".gtd/REVIEW.md" is replaced with "- [x] won't fix"
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
+      """
+    Given step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
+    And step "build.review.standards.recording" runs its script
+    And step "build.review.standards.raising" runs its script
+    When the process is driven
     And the text "- [ ] keep the old one (discard the new)" in ".gtd/REVIEW.md" is replaced with "- [x] keep the old one (discard the new)"
     And gtd lands
     And the process is driven
@@ -325,10 +337,6 @@ Feature: the review learns standards from the human's answers
 
       Please add subtract(a, b).
       """
-    And judge step "build.review.standards.judge" answers:
-      """
-      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
-      """
     When the process is driven
     And text is appended to ".gtd/REVIEW.md":
       """
@@ -344,7 +352,15 @@ Feature: the review learns standards from the human's answers
       """
     And the text "- [ ] won't fix" in ".gtd/REVIEW.md" is replaced with "- [x] won't fix"
     And gtd lands
-    And the process is driven
+    Given judge step "build.review.standards.judge" answers:
+      """
+      [{"id":"standard-1","answer":"yes","p":0.9},{"id":"standard-1.contradicts-1","answer":"yes","p":0.8}]
+      """
+    Given step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
+    And step "build.review.standards.recording" runs its script
+    And step "build.review.standards.raising" runs its script
+    When the process is driven
     And the text "- [ ] _your answer_" in ".gtd/REVIEW.md" is replaced with "- [x] Calculators with state are classes."
     And gtd lands
     And the process is driven

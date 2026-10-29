@@ -1,6 +1,6 @@
 import { fix } from "./fix.js"
 
 export { fix, fixFlow, fixReviewNotes } from "./fix.js"
-export * from "../shared/reserved.js"
+export { workflowOptions } from "../shared/workflow-options.js"
 
 export default fix

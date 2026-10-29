@@ -8,7 +8,7 @@ Feature: the review flags an existing scenario that lost an assertion
   `Weakened:` note on that scenario. A reworded `Given` or `When` is not.
 
   Background:
-    Given the shipped workflows, as gtd install scaffolds them
+    Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "spec/widget.feature" with:
       """
