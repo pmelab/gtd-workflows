@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { toRequest } from "@gtd/judges/index.js"
-import { testRepo } from "@gtd/testkit/index.js"
+import { toRequest } from "@support/judge"
+import { testRepo } from "@support/testkit"
 import { retryQuestion } from "./health.js"
 
 describe("retryQuestion", () => {
@@ -18,7 +18,7 @@ type W = { write(p: string, c: string): void }
 describe("gate guard", () => {
   const config = (guard: string) =>
     [
-      `import { gate } from "@pmelab/gtd/workflows"`,
+      `import { gate } from "#workflow"`,
       `import { agent, refuse } from "@pmelab/gtd/flows"`,
       `export const held = async () => { await agent("first", "go"); ${guard}; await gate("suite", "fix it", guard) }`,
       `export default held`,
@@ -56,7 +56,7 @@ describe("gate guard", () => {
 describe("healthy describeGuard", () => {
   const config = (options: string) =>
     [
-      `import { healthy } from "@pmelab/gtd/workflows"`,
+      `import { healthy } from "#workflow"`,
       `import { agent, read, refuse } from "@pmelab/gtd/flows"`,
       `const describeGuard = () => { refuse("describe-guarded: nope") }`,
       `const guard = () => { refuse("guarded: nope") }`,
@@ -126,7 +126,7 @@ describe("healthy at the fix cap", () => {
     let runs = 0
     const repo = testRepo({
       workflow: [
-        `import { healthy } from "@pmelab/gtd/workflows"`,
+        `import { healthy } from "#workflow"`,
         `import { agent } from "@pmelab/gtd/flows"`,
         `export const defaults = { judgeIdenticalMinP: "0.7"${extra} }`,
         `export const held = async () => { await agent("first", "go"); await healthy(() => agent("fix", "go")) }`,

@@ -1,47 +1,44 @@
-import { globSync, readdirSync, realpathSync } from "node:fs"
+import { globSync, readdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { quickpickle } from "quickpickle"
-import { defaultServerConditions } from "vite"
-import { defineConfig } from "vitest/config"
-import { isolateGitConfig, rawText, servedAsShipped } from "./support/plugins.ts"
+import { defineConfig, type Plugin } from "vitest/config"
 
-const GTD = realpathSync("node_modules/@pmelab/gtd")
+// The gtd internals a few tests reach (`@gtd/<unit>`) are its sources, which
+// import markdown as text the way its bundler does.
+const rawText = (): Plugin => ({
+  name: "raw-text",
+  transform(_code, id) {
+    if (/\.(md|yaml|html)$/.test(id)) {
+      return { code: `export default ${JSON.stringify(readFileSync(id, "utf8"))};`, map: null }
+    }
+  },
+})
 
-isolateGitConfig()
+const alias = [
+  { find: /^@gtd\//, replacement: `${resolve("node_modules/@pmelab/gtd/src")}/` },
+  { find: /^@support\/(.+)$/, replacement: `${resolve("support")}/$1.ts` },
+]
 
-const resolveConfig = {
-  alias: [{ find: /^@gtd\//, replacement: `${GTD}/src/` }],
-  // gtd's sources, not its build: the engine the testkit runs and the
-  // `@pmelab/gtd/flows` a workflow imports must be one module.
-  conditions: ["source", ...defaultServerConditions],
-  // gtd's testkit registers its steps with the same quickpickle the features run on.
-  dedupe: ["quickpickle", "vitest", "effect"],
-}
-
-// One project per workflow: each brings its own steps, two copies of one
-// workflow would register the same step twice, and each project serves its
-// own workflow as `@pmelab/gtd/workflows`.
+// One project per workflow: each registers its own steps, and two copies of
+// one workflow would register the same step twice.
 const workflows = readdirSync("workflows", { withFileTypes: true })
   .filter((d) => d.isDirectory())
   .map((d) => d.name)
 
 export default defineConfig({
-  resolve: resolveConfig,
-  ssr: { resolve: { conditions: resolveConfig.conditions } },
+  resolve: { alias },
   test: {
     projects: workflows.map((name) => ({
-      resolve: resolveConfig,
-      ssr: { resolve: { conditions: resolveConfig.conditions } },
-      plugins: [
-        servedAsShipped(`${GTD}/src/workflows`, resolve("workflows", name)),
-        rawText(),
-        quickpickle({ stepTimeout: 30_000, skipTags: ["@skip"] }),
-      ],
+      resolve: { alias },
+      plugins: [rawText(), quickpickle({ stepTimeout: 30_000, skipTags: ["@skip"] })],
       test: {
         name,
         include: [`workflows/${name}/**/*.test.ts`, `workflows/${name}/**/*.feature`],
+        env: { GTD_WORKFLOW_ROOT: resolve("workflows", name) },
         setupFiles: [
-          `${GTD}/src/testkit/steps.ts`,
+          "./support/setup.ts",
+          "@pmelab/gtd/testkit/gherkin",
+          "./support/world.ts",
           ...globSync(`workflows/${name}/**/*.steps.ts`)
             .sort()
             .map((path) => `./${path}`),

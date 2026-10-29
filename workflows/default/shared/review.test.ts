@@ -18,7 +18,7 @@ import {
 import type { ReviewNote } from "@pmelab/gtd/steering"
 import * as bundled from "../index.js"
 import { fixtureContext } from "./text.fixture.js"
-import { toRequest } from "@gtd/judges/index.js"
+import { toRequest } from "@support/judge"
 
 afterEach(() => installContext(undefined))
 

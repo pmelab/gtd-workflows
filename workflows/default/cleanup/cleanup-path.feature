@@ -20,8 +20,8 @@ Feature: cleanup walks one fixed path from the opening commit to idle
         steering,
         skills,
         access,
-      } from "@pmelab/gtd/workflows/feature"
-      import { cleanup } from "@pmelab/gtd/workflows"
+      } from "#workflow/feature"
+      import { cleanup } from "#workflow"
       export { cleanup }
       """
     And an environment variable "GTD_QUALITYREVIEWS" set to ""

@@ -1,7 +1,7 @@
 import { After, Given, Then } from "quickpickle"
-import { CONFIG_SCAFFOLD } from "@gtd/install/index.js"
+import { CONFIG_SCAFFOLD } from "@support/testkit"
 import assert from "node:assert"
-import type { TestkitWorld } from "@gtd/testkit/index.js"
+import type { TestkitWorld } from "@support/testkit"
 
 Given("the shipped workflows, as gtd install scaffolds them", (world: TestkitWorld) => {
   world.configure(CONFIG_SCAFFOLD)

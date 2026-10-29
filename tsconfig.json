@@ -15,15 +15,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "customConditions": ["source"],
     "paths": {
-      "@gtd/*": ["./node_modules/@pmelab/gtd/src/*"]
+      "@gtd/*": ["./node_modules/@pmelab/gtd/src/*"],
+      "@support/*": ["./support/*.ts"]
     }
   },
-  "include": [
-    "workflows",
-    "support",
-    "vitest.config.ts",
-    "node_modules/@pmelab/gtd/src/ui/types.d.ts"
-  ]
+  "include": ["workflows", "support", "vitest.config.ts"]
 }

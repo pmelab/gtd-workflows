@@ -10,7 +10,7 @@ Feature: a fix loop still making progress at the cap gets one extra turn
   Background:
     Given a gtd config with:
       """
-      import { healthy } from "@pmelab/gtd/workflows"
+      import { healthy } from "#workflow"
       import { agent } from "@pmelab/gtd/flows"
 
       export const defaults = { judgeIdenticalMinP: "0.7" }

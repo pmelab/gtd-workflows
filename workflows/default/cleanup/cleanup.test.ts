@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { CONFIG_SCAFFOLD } from "@gtd/install/index.js"
-import { testRepo, type TestRepo } from "@gtd/testkit/index.js"
+import { CONFIG_SCAFFOLD } from "@support/testkit"
+import { testRepo, type TestRepo } from "@support/testkit"
 import { reviewDoc } from "../shared/config.fixture.js"
 
 type Actors = NonNullable<Parameters<TestRepo["drive"]>[0]>
 
-const CONFIG = `${CONFIG_SCAFFOLD}export { cleanup } from "@pmelab/gtd/workflows"\n`
+const CONFIG = `${CONFIG_SCAFFOLD}export { cleanup } from "#workflow"\n`
 
 const REGISTRY = `export const FLAGS = [
   { name: "alpha", owner: "a", expiry: "2027-01-01", kind: "release" },

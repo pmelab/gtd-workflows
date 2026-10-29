@@ -17,8 +17,8 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
         steering,
         skills,
         access,
-      } from "@pmelab/gtd/workflows/feature"
-      import { cleanup } from "@pmelab/gtd/workflows"
+      } from "#workflow/feature"
+      import { cleanup } from "#workflow"
       export { cleanup }
       """
     And an environment variable "GTD_QUALITYREVIEWS" set to ""

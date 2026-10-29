@@ -1,88 +1,88 @@
 # gtd workflows
 
-My own gtd workflows, each ejected from gtd's shipped ones and changed from
-there. Every directory under `workflows/` is one self-contained workflow
-(`default`, and later e.g. `simple`, `complex` or `blog`), exporting the same
-factories gtd's `@pmelab/gtd/workflows` does.
-
-## Setup
-
-```sh
-npm install        # links ../gtd (the gtd checkout) as @pmelab/gtd
-ln -s "$PWD/bin/gtd-wf" ~/.dotfiles/bin/gtd-wf   # or put bin/ on PATH
-```
-
-The gtd checkout at `../gtd` must be built (`npm run build` there): the tests
-run gtd's engine from its sources, which import the built web client.
-
-## Commands
-
-```sh
-gtd-wf eject <name> [--gtd <path>]  # copy gtd's shipped workflows into workflows/<name>
-gtd-wf new <name> --from <name>     # start a workflow as a copy of another
-gtd-wf pin [ref]                    # check out ref (default HEAD) in the pinned checkout
-gtd-wf build                        # bundle every workflow into dist/
-gtd-wf status                       # the pin, its workflows, the gtd they were ejected from
-gtd-wf config <name>                # print a gtd.config.ts using the pinned workflow
-```
-
-`eject` rewrites the copy's imports: gtd's public units become
-`@pmelab/gtd/<unit>` (served by the running gtd at runtime), and the internals
-only tests use become `@gtd/<unit>`, aliased to the linked gtd's sources. It
-records the gtd version and commit in `workflows/<name>/EJECTED.json`.
+Workflows for [gtd](https://github.com/pmelab/gtd). gtd itself ships none: a
+repository's `gtd.config.ts` imports the workflows it runs, from here or from
+anywhere else. Every directory under `workflows/` is one self-contained
+workflow; `default` is the feature → review → fix workflow gtd used to bundle.
 
 ## Using a workflow
 
-Repositories never import from this working copy. They import from a separate
-checkout of this repository, pinned at a commit: `~/.local/share/gtd/workflows`
-(override with `$GTD_WF_PINNED`).
+Workflows are used from a pinned checkout of this repository on your machine,
+`~/.local/share/gtd/workflows` (override with `$GTD_WF_PINNED`):
 
 ```sh
-git commit -am "feat(simple): …"
-gtd-wf pin            # pin the commit just made
-gtd-wf config simple > ~/Code/some-repo/gtd.config.ts
+git clone https://github.com/pmelab/gtd-workflows ~/.local/share/gtd/workflows
+~/.local/share/gtd/workflows/bin/gtd-wf pin origin/main   # or a tag
+~/.local/share/gtd/workflows/bin/gtd-wf config default > gtd.config.ts
 ```
 
-`pin` installs the pinned commit's dependencies and bundles each workflow into
-`dist/<name>.mjs` there; `config` imports that bundle. gtd transpiles a config's
-TypeScript imports on every call (about 1.4s for a whole workflow); the bundle
-loads in about 0.2s more than gtd's shipped workflows.
+`pin` checks the ref out, installs the runtime dependencies (`effect`,
+`esbuild`) and bundles each workflow into `dist/<name>.mjs`. `config` prints a
+`gtd.config.ts` importing that bundle by its absolute path — so the config works
+on machines with the checkout at the same path, and every other machine needs
+its own checkout and its own config.
 
-Editing here changes nothing a running process sees until the next `pin`.
-`gtd-wf pin <ref>` moves back to any earlier commit.
+gtd itself is never installed in the checkout: the running gtd serves every
+`@pmelab/gtd/*` import.
 
-- **Pin only while no gtd process is mid-run** on a repository using the pin: a
+- **Pin only while no gtd process is mid-run** in a repository using the pin: a
   process resting at a step the new pin no longer has breaks. gtd warns when a
   config file changes mid-run.
-- **A workflow is tied to the gtd it was ejected from.** Upgrading gtd can break
-  it; run the tests after every gtd upgrade (`EJECTED.json` says which version
-  it started from).
-- The pinned checkout installs only `effect` and `esbuild`. gtd itself is never
-  installed there: the running gtd serves every `@pmelab/gtd/*` import.
+- **A workflow is written against a gtd version.**
+  `workflows/<name>/EJECTED.json` names it; `gtd-wf status` shows it beside the
+  gtd on `PATH`.
+
+## Writing a workflow
+
+```sh
+git clone https://github.com/pmelab/gtd-workflows && cd gtd-workflows
+npm install
+bin/gtd-wf new mine --from default   # or start an empty directory
+```
+
+A workflow is a directory with an `index.ts` exporting what a `gtd.config.ts`
+exports: workflow functions or factories, and the reserved exports (`defaults`,
+`summary`, `steering`, …). It imports gtd only through its public subpaths —
+`@pmelab/gtd/flows`, `/wire`, `/steering`, `/workflow-kit`. See gtd's
+[configuration](https://github.com/pmelab/gtd/blob/main/docs/configuration.md)
+for the shape.
+
+To try changes, commit them and pin the working copy's commit:
+
+```sh
+git commit -am "feat(mine): …"
+bin/gtd-wf pin        # HEAD of this working copy
+bin/gtd-wf status
+```
+
+`gtd-wf pin <ref>` moves back to any earlier commit.
 
 ## Testing
 
 ```sh
-npm test                          # every workflow
-npx vitest run --project simple   # one workflow
+npm test                        # every workflow
+npx vitest run --project mine   # one workflow
 npm run typecheck
 ```
 
-Each workflow is its own vitest project: its `*.test.ts` files, its `.feature`
-files (quickpickle) and its `*.steps.ts`, on top of gtd's testkit steps. Tests
-drive gtd's engine in memory against the workflow, the same way gtd tests its
-shipped ones.
+Tests use gtd's
+[testkit](https://github.com/pmelab/gtd/blob/main/docs/testing.md), installed as
+a dev dependency: they drive gtd's real engine in memory against the workflow.
+Each workflow is its own vitest project — its `*.test.ts`, its `.feature` files
+and its `*.steps.ts` — so two workflows never share steps.
 
-Inside a workflow's project, `@pmelab/gtd/workflows` (and `/feature`, `/review`
-…) **is that workflow**: gtd serves it in place of its own shipped one. A test
-config imports it exactly as a repository imports gtd's, so the ejected tests
-stay word for word what gtd ships, and a copy made with `gtd-wf new` tests
-itself without edits:
+A test configures the workflow under test with `#workflow` (and
+`#workflow/feature`, `#workflow/review` … for its subdirectories), which
+resolves to the workflow directory the test lives in. A copy made with
+`gtd-wf new` tests itself without edits:
 
 ```gherkin
 Given a gtd config with:
   """
-  import { feature } from "@pmelab/gtd/workflows/feature"
+  import { feature } from "#workflow/feature"
   export default feature({ naiveTest: true })
   """
 ```
+
+Tests import the testkit through `@support/testkit`, which resolves `#workflow`
+in a config given as source.

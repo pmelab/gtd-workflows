@@ -9,7 +9,7 @@ Feature: a red check is re-run once before it reaches a person
   Background:
     Given a gtd config with:
       """
-      import { healthy } from "@pmelab/gtd/workflows"
+      import { healthy } from "#workflow"
       import { agent, human } from "@pmelab/gtd/flows"
 
       export const held = async () => {

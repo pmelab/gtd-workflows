@@ -16,8 +16,8 @@ Feature: rollout turns one release flag default-on and touches nothing else
         steering,
         skills,
         access,
-      } from "@pmelab/gtd/workflows/feature"
-      import { rollout } from "@pmelab/gtd/workflows"
+      } from "#workflow/feature"
+      import { rollout } from "#workflow"
       export { rollout }
       export const elsewhere = rollout({ flagRegistry: "config/flags.ts" })
       """

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { CONFIG_SCAFFOLD } from "@gtd/install/index.js"
-import { runsItsScript, testRepo } from "@gtd/testkit/index.js"
+import { CONFIG_SCAFFOLD } from "@support/testkit"
+import { runsItsScript, testRepo } from "@support/testkit"
 
-const CONFIG = `${CONFIG_SCAFFOLD}export { rollout } from "@pmelab/gtd/workflows"\n`
+const CONFIG = `${CONFIG_SCAFFOLD}export { rollout } from "#workflow"\n`
 
 const REGISTRY = `export const FLAGS = [
   { name: "alpha", owner: "a", expiry: "2027-01-01", kind: "release" },

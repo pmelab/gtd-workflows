@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { runsItsScript, testRepo } from "@gtd/testkit/index.js"
-import { CONFIG_SCAFFOLD } from "@gtd/install/index.js"
+import { runsItsScript, testRepo } from "@support/testkit"
+import { CONFIG_SCAFFOLD } from "@support/testkit"
 import { reviewDoc } from "../shared/config.fixture.js"
 
 const REVIEW = ".gtd/REVIEW.md"

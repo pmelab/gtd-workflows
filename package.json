@@ -15,7 +15,7 @@
     "esbuild": "^0.28.0"
   },
   "devDependencies": {
-    "@pmelab/gtd": "file:../gtd",
+    "@pmelab/gtd": "58.2.0",
     "@types/node": "^25.9.3",
     "oxfmt": "^0.59.0",
     "quickpickle": "1.11.2",

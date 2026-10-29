@@ -8,10 +8,9 @@ Feature: each quality lens runs on its own model hint
   Background:
     Given a gtd config with:
       """
-      import { feature } from "@pmelab/gtd/workflows/feature"
-      export { summary, steering, skills, access } from "@pmelab/gtd/workflows/feature"
+      import { feature } from "#workflow/feature"
+      export { summary, steering, skills, access } from "#workflow/feature"
       export default feature({
-        flagMode: false,
         qualityReviews: "correctness, conventions, test-audit=opus",
       })
       """
