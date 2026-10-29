@@ -1,0 +1,213 @@
+#!/usr/bin/env node
+// gtd-wf: eject gtd's shipped workflows into this repository, and pin the
+// separate checkout gtd.config.ts files import them from.
+import { execFileSync } from "node:child_process"
+import {
+  cpSync,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs"
+import { homedir } from "node:os"
+import { dirname, join, relative, resolve, sep } from "node:path"
+
+const REPO = resolve(realpathSync(import.meta.dirname), "..")
+const WORKFLOWS = join(REPO, "workflows")
+const PINNED = process.env.GTD_WF_PINNED ?? join(homedir(), ".config", "gtd", "pinned")
+
+// gtd units a workflow may import at runtime: the package exports them, and
+// the running gtd serves its own copy to every config.
+const PUBLIC = new Set(["flows", "wire", "steering", "workflow-kit"])
+
+const die = (message) => {
+  console.error(`gtd-wf: ${message}`)
+  process.exit(1)
+}
+
+const git = (cwd, ...args) =>
+  execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim()
+
+const walk = (dir) =>
+  readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name)
+    return statSync(path).isDirectory() ? walk(path) : [path]
+  })
+
+const NAME = /^[a-z][a-z0-9-]*$/
+const workflowDir = (name) => {
+  if (!NAME.test(name ?? "")) die(`"${name}" is not a workflow name (${NAME})`)
+  return join(WORKFLOWS, name)
+}
+
+const SPECIFIER =
+  /(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+|\bvi\.(?:mock|doMock|unmock|importActual|importMock)\(\s*)"(\.{1,2}\/[^"]+)"/g
+
+/** Rewrite the imports of `file` (relative to the workflows directory) that leave it. */
+const rewrite = (file, source, gtdSrc) => {
+  const original = join(gtdSrc, "workflows", file)
+  return source.replace(SPECIFIER, (match, lead, spec) => {
+    const target = resolve(dirname(original), spec)
+    const fromSrc = relative(gtdSrc, target).split(sep)
+    if (fromSrc[0] === "workflows") return match
+    const [unit, entry] = fromSrc
+    if (entry !== "index.js" || fromSrc.length !== 2)
+      die(`${file}: "${spec}" reaches past ${unit}'s index — not ejectable`)
+    if (PUBLIC.has(unit)) return `${lead}"@pmelab/gtd/${unit}"`
+    if (!/\.(test|fixture|steps)\.ts$/.test(file))
+      die(`${file}: runtime import of gtd's private "${unit}" — not ejectable`)
+    return `${lead}"@gtd/${unit}/index.js"`
+  })
+}
+
+const eject = (name, gtdArg) => {
+  const dest = workflowDir(name)
+  if (existsSync(dest)) die(`${relative(REPO, dest)} exists — pick another name`)
+  const gtd = realpathSync(gtdArg ?? join(REPO, "node_modules", "@pmelab", "gtd"))
+  const gtdSrc = join(gtd, "src")
+  const from = join(gtdSrc, "workflows")
+  if (!existsSync(from)) die(`${from} does not exist`)
+  cpSync(from, dest, { recursive: true })
+  for (const file of walk(dest).filter((f) => /\.(ts|feature)$/.test(f))) {
+    const rel = relative(dest, file)
+    const source = readFileSync(file, "utf8")
+    const text = rewrite(rel, source, gtdSrc)
+    if (text !== source) writeFileSync(file, text)
+  }
+  const pkg = JSON.parse(readFileSync(join(gtd, "package.json"), "utf8"))
+  let commit
+  try {
+    commit = git(gtd, "rev-parse", "HEAD")
+  } catch {}
+  writeFileSync(
+    join(dest, "EJECTED.json"),
+    `${JSON.stringify({ gtd: pkg.version, commit, ejected: new Date().toISOString().slice(0, 10) }, null, 2)}\n`,
+  )
+  execFileSync(join(REPO, "node_modules", ".bin", "oxfmt"), ["--write", dest], {
+    cwd: REPO,
+    stdio: "inherit",
+  })
+  console.log(`ejected gtd ${pkg.version} into ${relative(REPO, dest)}`)
+}
+
+const copy = (name, from) => {
+  const src = workflowDir(from)
+  const dest = workflowDir(name)
+  if (!existsSync(src)) die(`no workflow "${from}"`)
+  if (existsSync(dest)) die(`${relative(REPO, dest)} exists — pick another name`)
+  cpSync(src, dest, { recursive: true })
+  console.log(`copied ${from} to ${relative(REPO, dest)}`)
+}
+
+const pin = (ref = "HEAD") => {
+  const commit = git(REPO, "rev-parse", "--verify", `${ref}^{commit}`)
+  if (!existsSync(PINNED)) {
+    execFileSync("git", ["clone", "--quiet", "--no-checkout", REPO, PINNED], { stdio: "inherit" })
+  } else {
+    git(PINNED, "fetch", "--quiet", "origin")
+  }
+  if (git(PINNED, "status", "--porcelain") !== "") die(`${PINNED} has local changes`)
+  const before = existsSync(join(PINNED, "package-lock.json"))
+    ? readFileSync(join(PINNED, "package-lock.json"), "utf8")
+    : undefined
+  git(PINNED, "checkout", "--quiet", "--detach", commit)
+  const lock = readFileSync(join(PINNED, "package-lock.json"), "utf8")
+  if (lock !== before || !existsSync(join(PINNED, "node_modules"))) {
+    // Runtime dependencies only: gtd itself is served by the running gtd.
+    execFileSync("npm", ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], {
+      cwd: PINNED,
+      stdio: "inherit",
+    })
+  }
+  console.log(`pinned ${PINNED} at ${git(PINNED, "log", "-1", "--format=%h %s")}`)
+}
+
+const workflows = (root) =>
+  existsSync(join(root, "workflows"))
+    ? readdirSync(join(root, "workflows")).filter((n) =>
+        existsSync(join(root, "workflows", n, "index.ts")),
+      )
+    : []
+
+const ejectedFrom = (root, name) => {
+  const file = join(root, "workflows", name, "EJECTED.json")
+  return existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).gtd : "?"
+}
+
+const status = () => {
+  let running = "?"
+  try {
+    running = execFileSync("gtd", ["--version"], { encoding: "utf8" }).trim()
+  } catch {}
+  console.log(`gtd on PATH: ${running}`)
+  if (!existsSync(PINNED)) {
+    console.log(`pinned: none — run \`gtd-wf pin\``)
+    return
+  }
+  const head = git(PINNED, "rev-parse", "HEAD")
+  const ahead = git(REPO, "rev-list", "--count", `${head}..HEAD`)
+  console.log(`pinned: ${PINNED} at ${git(PINNED, "log", "-1", "--format=%h %s")}`)
+  console.log(`dev repo HEAD is ${ahead} commit(s) ahead of the pin`)
+  for (const name of workflows(PINNED))
+    console.log(`  ${name}  (ejected from gtd ${ejectedFrom(PINNED, name)})`)
+}
+
+const config = (name) => {
+  if (!existsSync(join(PINNED, "workflows", name, "index.ts")))
+    die(`the pinned checkout has no workflow "${name}" — commit it and run \`gtd-wf pin\``)
+  const at = join(PINNED, "workflows", name)
+  process.stdout.write(`// Workflow "${name}" from the pinned checkout (gtd-wf pin moves it).
+import {
+  feature as featureWorkflow,
+  review as reviewWorkflow,
+  fix as fixWorkflow,
+} from "${at}/index.ts"
+
+export const feature = featureWorkflow()
+export const review = reviewWorkflow()
+export const fix = fixWorkflow()
+export default feature
+
+export { defaults, envDefaults, summary, base, steering, skills, access, doors } from "${at}/index.ts"
+`)
+}
+
+const USAGE = `usage: gtd-wf <command>
+  eject <name> [--gtd <path>]  copy gtd's shipped workflows into workflows/<name>
+  new <name> --from <name>     start a workflow as a copy of another
+  pin [ref]                    check out ref (default HEAD) in ${PINNED}
+  status                       show the pin and the workflows it carries
+  config <name>                print a gtd.config.ts using the pinned workflow`
+
+const [command, ...rest] = process.argv.slice(2)
+const flag = (name) => {
+  const at = rest.indexOf(name)
+  return at === -1 ? undefined : rest.splice(at, 2)[1]
+}
+switch (command) {
+  case "eject": {
+    const gtd = flag("--gtd")
+    eject(rest[0], gtd)
+    break
+  }
+  case "new": {
+    const from = flag("--from")
+    if (from === undefined) die("new needs --from <name>")
+    copy(rest[0], from)
+    break
+  }
+  case "pin":
+    pin(rest[0])
+    break
+  case "status":
+    status()
+    break
+  case "config":
+    config(rest[0])
+    break
+  default:
+    console.log(USAGE)
+    process.exit(command === undefined || command === "help" ? 0 : 1)
+}
