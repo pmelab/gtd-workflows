@@ -15,7 +15,7 @@ Feature: the naive pass and seam judge decide how a feature is built
         },
       }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

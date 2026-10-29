@@ -6,7 +6,7 @@ Feature: each finding at the finding gate names the lens that wrote it
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness,tests"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness,tests"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

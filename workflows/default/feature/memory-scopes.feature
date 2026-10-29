@@ -35,7 +35,7 @@ Feature: each phase of the shipped workflow is its own conversation
 
   Scenario: the build tail and its review are separate conversations
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """
       a failing test

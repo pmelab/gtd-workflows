@@ -10,8 +10,8 @@ Feature: a naive pass the judge rules land is itself the implementation
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/greeting.ts" with:
       """
       export const greeting = "Helo, world"

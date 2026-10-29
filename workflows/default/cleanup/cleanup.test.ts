@@ -97,8 +97,12 @@ describe("the cleanup guard over every later agent turn", () => {
     "build.quality.triage": () => '[{"id":"Q1","answer":"mechanical","p":0.9}]',
   }
 
-  // Without the shipped access rules, which would refuse a source write from a read-only turn first: the guard is the second line.
-  const NO_ACCESS = CONFIG.replace("  access,\n", "")
+  // With the shipped access rules lifted, which would refuse a source write from a read-only turn first: the guard is the second line.
+  const noAccess = (lens?: string) => `import { defineConfig } from "@pmelab/gtd/flows"
+${CONFIG}export const config = defineConfig({
+  access: { "build.review": {}${lens === undefined ? "" : `, "build.quality.${lens}": {}`} },
+})
+`
 
   const guarded = (lenses = "", workflow = CONFIG) =>
     testRepo({
@@ -182,7 +186,7 @@ describe("the cleanup guard over every later agent turn", () => {
   it("refuses an escalation describe turn that re-adds the env var", async () => {
     let runs = 0
     await expect(
-      driven(guarded("", NO_ACCESS), {
+      driven(guarded("", noAccess()), {
         "build.health.check": (_, r) => r.write(FEEDBACK, `failing ${runs++}\n`),
         "build.health.recheck": (_, r) => r.write(FEEDBACK, `failing ${runs++}\n`),
         "build.health.judge": () => '[{"id":"verdict","answer":"progress","p":0.9}]',
@@ -194,7 +198,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a quality fix turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("correctness", NO_ACCESS), {
+      driven(guarded("correctness", noAccess("correctness")), {
         ...MECHANICAL,
         "build.fix.quality.fixing": (_, r) => r.write("src/b.ts", NAMED),
       }),
@@ -203,7 +207,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a quality lens turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("correctness", NO_ACCESS), {
+      driven(guarded("correctness", noAccess("correctness")), {
         "build.quality.correctness.reviewing": (_, r) => r.write("src/b.ts", NAMED),
       }),
     ).rejects.toThrow("src/b.ts:1 still names GTD_FLAG_LIVE")
@@ -229,7 +233,7 @@ describe("the cleanup guard over every later agent turn", () => {
 
   it("refuses a review turn that re-adds the env var", async () => {
     await expect(
-      driven(guarded("", NO_ACCESS), {
+      driven(guarded("", noAccess()), {
         "build.review.reviewing": (_, r) => {
           r.write(".gtd/REVIEW.md", reviewDoc("fine"))
           r.write("src/b.ts", NAMED)

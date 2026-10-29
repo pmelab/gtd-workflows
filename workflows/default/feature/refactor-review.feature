@@ -9,12 +9,12 @@ Feature: the refactor is reviewed on its own before the feature is implemented
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
 
   Scenario: with a narrowed seamAllow a test file added by the refactor is refused
-    Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
-    And an environment variable "GTD_SEAMALLOW" set to "docs/**"
+    Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
+    And the environment variable "GTD_SEAMALLOW" is "docs/**"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -115,8 +115,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
 
 
   Scenario: refactorQualityReviews picks the refactor's lenses and qualityReviews does not reach them
-    Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to "correctness"
-    And an environment variable "GTD_QUALITYREVIEWS" set to "owasp-security"
+    Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness"
+    And the environment variable "GTD_QUALITYREVIEWS" is "owasp-security"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -217,7 +217,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: with the refactor lenses blank
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -812,7 +812,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -846,7 +846,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -889,7 +889,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -923,7 +923,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -967,7 +967,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
         [^q]:
             - H: why a shared op?
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -1001,7 +1001,7 @@ Feature: the refactor is reviewed on its own before the feature is implemented
             - A: add and subtract differ only by sign.
             - H: understood, thanks. No change needed.
         """
-      And step "refactor.build.review.collecting" rewrites ".gtd/REVIEW.md" with:
+      And step "refactor.build.review.collecting" overwrites ".gtd/REVIEW.md", if it exists, with:
         """
         # Review: abc1234
 
@@ -1167,8 +1167,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: with a quality lens on both the refactor and the feature
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to "correctness"
-      And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness"
+      And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -1300,8 +1300,8 @@ Feature: the refactor is reviewed on its own before the feature is implemented
   Rule: a refactor package never carries a test file, and demoted headings stop at ######
 
     Background:
-      Given an environment variable "GTD_REFACTORQUALITYREVIEWS" set to ""
-      And an environment variable "GTD_SEAMALLOW" set to "docs/**"
+      Given the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
+      And the environment variable "GTD_SEAMALLOW" is "docs/**"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b

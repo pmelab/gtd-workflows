@@ -1,6 +1,6 @@
 // Builds a fresh, disposable fixture repo for one eval case + variant: git
 // init -> case.base files committed (outside the review range) -> variant
-// files written into the working tree -> `gtd --workflow <name>` piped to
+// files written into the working tree -> `gtd start <name>` piped to
 // `sh`, so the opening commit captures exactly the variant's code under review.
 //
 // Deliberately imports nothing from `tests/` — those helpers are wired into
@@ -145,15 +145,11 @@ export function buildFixture(caseDef, variant, env = scrubbedEnv()) {
   writeFiles(repo, caseDef.variants[variant])
 
   assertTmpCwd(repo)
-  const script = execFileSync(
-    process.execPath,
-    [GTD_BIN, "--workflow", workflowName(caseDef.state)],
-    {
-      cwd: repo,
-      env,
-      encoding: "utf-8",
-    },
-  )
+  const script = execFileSync(process.execPath, [GTD_BIN, "start", workflowName(caseDef.state)], {
+    cwd: repo,
+    env,
+    encoding: "utf-8",
+  })
   assertTmpCwd(repo)
   execFileSync("sh", ["-c", script], { cwd: repo, env, encoding: "utf-8" })
 

@@ -28,7 +28,7 @@ Feature: the green-baseline start gate runs the suite before a process builds
     When the process is driven
     Then the process rests at "start-gate.blocked"
     And the resting step's content contains "test baseline is red"
-    And the resting step's content contains "gtd --workflow fix"
+    And the resting step's content contains "gtd start fix"
     And no commit body contains "Gtd-Mark: flaky="
     Given step "start-gate.check" from now on changes nothing
     And step "start-gate.blocked" deletes ".gtd/FEEDBACK.md"
@@ -89,7 +89,7 @@ Feature: the green-baseline start gate runs the suite before a process builds
       """
 
   Scenario: a green baseline proceeds from the gate into design.triage
-    Given an environment variable "GTD_TESTCOMMAND" set to "true"
+    Given the environment variable "GTD_TESTCOMMAND" is "true"
     And the command "true" exits 0
     And a file "NOTE.md" with:
       """
@@ -102,7 +102,7 @@ Feature: the green-baseline start gate runs the suite before a process builds
     And ".gtd/FEEDBACK.md" does not exist
 
   Scenario: the unwind reverts a note and a hand-edited code change alike, while both survive in the entry commit
-    Given an environment variable "GTD_TESTCOMMAND" set to "true"
+    Given the environment variable "GTD_TESTCOMMAND" is "true"
     And the command "true" exits 0
     And a file "src/real.ts" with:
       """
@@ -125,7 +125,7 @@ Feature: the green-baseline start gate runs the suite before a process builds
       """
 
   Scenario: a red baseline halts at start-gate.blocked with the failing output recorded
-    Given an environment variable "GTD_TESTCOMMAND" set to "false"
+    Given the environment variable "GTD_TESTCOMMAND" is "false"
     And the command "false" exits 1
     And a file "NOTE.md" with:
       """

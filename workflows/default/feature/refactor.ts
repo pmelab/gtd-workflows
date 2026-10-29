@@ -9,7 +9,7 @@ import {
   removeScript,
   run,
   scope,
-  vars,
+  settings,
   type Change,
   type DiffShapeResult,
 } from "@pmelab/gtd/flows"
@@ -238,7 +238,7 @@ interface Plan {
 /** Undefined for every shape that is not a readable `refactor-first`; throws on a bad flag pattern. */
 const plan = (shape: DiffShapeResult, options: RefactorOptions): Plan | undefined => {
   if (shape.choice !== "refactor-first" || shape.unreadable.length > 0) return undefined
-  const pattern = vars.refactorFlagPattern ?? defaults.refactorFlagPattern!
+  const pattern = settings.refactorFlagPattern ?? defaults.refactorFlagPattern!
   const expression = flagExpression(pattern)
   const strays = refactorStrays(shape)
   if (strays.length === 0) return undefined
@@ -350,7 +350,7 @@ export const reviewedRefactor = async (
         green: true,
         guard,
         guardRests: false,
-        lenses: lensEntriesOf(vars.refactorQualityReviews ?? ""),
+        lenses: lensEntriesOf(settings.refactorQualityReviews ?? ""),
         feedback,
         fixAccess: strayAccess(p.strays),
         lensBase: entry,

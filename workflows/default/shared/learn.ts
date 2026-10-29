@@ -5,7 +5,7 @@ import {
   numeric,
   read,
   run,
-  vars,
+  settings,
   writeScript,
   type JudgeQuestion,
 } from "@pmelab/gtd/flows"
@@ -164,7 +164,7 @@ export const learnStandards = async (decisions: readonly ReviewDecision[]): Prom
     return true
   })
   // Blank keeps none, so there is nothing to ask.
-  const minP = numeric(vars.standardMinP, Infinity)
+  const minP = numeric(settings.standardMinP, Infinity)
   const { added, raised } =
     candidates.length === 0 || !Number.isFinite(minP)
       ? { added: [], raised: [] }

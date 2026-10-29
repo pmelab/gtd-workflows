@@ -24,7 +24,6 @@ export default defineConfig({
         setupFiles: [
           "./support/setup.ts",
           "@pmelab/gtd/testkit/gherkin",
-          "./support/world.ts",
           ...globSync(`workflows/${name}/**/*.steps.ts`)
             .sort()
             .map((path) => `./${path}`),

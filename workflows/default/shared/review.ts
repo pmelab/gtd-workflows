@@ -9,7 +9,7 @@ import {
   requireRevert,
   restoreScript,
   run,
-  vars,
+  settings,
   writeScript,
   type JudgeQuestion,
   type Judgment,
@@ -178,8 +178,8 @@ const triage =
             label: "Judging each note",
           })
     const { answers, truncated } = judgment
-    const minP = numeric(vars.reviewNoteActionable, Infinity)
-    const severityMinP = numeric(vars.reviewSeverityMinP, Infinity)
+    const minP = numeric(settings.reviewNoteActionable, Infinity)
+    const severityMinP = numeric(settings.reviewSeverityMinP, Infinity)
     severities.clear()
     return new Map(
       notes.map((n): [string, kit.Verdict] => {

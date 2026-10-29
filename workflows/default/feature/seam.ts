@@ -6,7 +6,7 @@ import {
   changesSince,
   check,
   codeChanges,
-  env,
+  envSettings,
   head,
   human,
   judgeDiffShape,
@@ -18,7 +18,7 @@ import {
   restoreScript,
   run,
   scope,
-  vars,
+  settings,
   wrote,
   type Change,
   type DiffShapeResult,
@@ -48,7 +48,7 @@ const NAIVE_RETRIES = 2
 export const judgeSeam = (tip: KeptTip): Promise<DiffShapeResult> =>
   judgeDiffShape("judge", {
     changes: tip.changes,
-    allow: (vars.seamAllow ?? defaults.seamAllow!)
+    allow: (settings.seamAllow ?? defaults.seamAllow!)
       .split(",")
       .map((glob) => glob.trim())
       .filter((glob) => glob !== ""),
@@ -145,7 +145,7 @@ const naiveGreen = (tip: KeptTip): Promise<boolean> => {
       "  exit 1",
       "fi",
       "(",
-      env.testCommand ?? "",
+      envSettings.testCommand ?? "",
       ")",
       "code=$?",
       ...paths,

@@ -6,7 +6,7 @@ Feature: fix lands a handed-off praise note with no change
 
   Scenario: a praise-only note is fixed with no change, and both review files are removed
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

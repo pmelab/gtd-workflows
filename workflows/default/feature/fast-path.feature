@@ -8,8 +8,8 @@ Feature: a trivial change takes the same few beats at either risk tier
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "1"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
+    And the environment variable "GTD_FLAG_RISK_TIER" is "1"
     And a file "src/greeting.ts" with:
       """
       export const greeting = "Helo, world"

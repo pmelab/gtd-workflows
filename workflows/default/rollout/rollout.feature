@@ -1,6 +1,6 @@
 Feature: rollout turns one release flag default-on and touches nothing else
 
-  `gtd --workflow rollout --var flag=<name>` has an agent set `defaultOn: true`
+  `gtd start rollout <flag>` has an agent set `defaultOn: true`
   on the named registry entry; a check refuses any other change, and a red
   suite rests at a human gate — never a fix turn.
 

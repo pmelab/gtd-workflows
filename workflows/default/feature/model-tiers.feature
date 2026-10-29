@@ -42,7 +42,7 @@ Feature: planning and coding turns take their models from env.plannerModel and e
     And the output of gtd "next --json" contains "\"model\":\"base\""
 
   Scenario: a GTD_PLANNERMODEL override repoints a planner-tier state
-    Given an environment variable "GTD_PLANNERMODEL" set to "opus"
+    Given the environment variable "GTD_PLANNERMODEL" is "opus"
     And a file "NOTE.md" with:
       """
       a sketch

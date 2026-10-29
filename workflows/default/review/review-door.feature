@@ -1,7 +1,7 @@
 @inmem
 Feature: the review door fixes its notes in the same process
 
-  `gtd door review` runs the feature's review over everything since its base:
+  `gtd start review` runs the feature's review over everything since its base:
   the triaged quality lap and its finding gate, then a reviewer's walkthrough
   of the change with the lap's summary, where the human's notes are fixed in
   place under the health loop before the review comes back. A sign-off ends
@@ -9,7 +9,7 @@ Feature: the review door fixes its notes in the same process
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b
@@ -172,7 +172,7 @@ Feature: the review door fixes its notes in the same process
       """
     When gtd opens door "review" with "HEAD~1"
     And the process is driven
-    And ".gtd/REVIEW.md" gets appended:
+    And text is appended to ".gtd/REVIEW.md":
       """
       ## src/calc.ts:1 (thread PRRT_1)
 

@@ -9,7 +9,7 @@ import {
   refuse,
   run,
   sectionBodies,
-  vars,
+  settings,
   writeScript,
   type JudgeQuestion,
 } from "@pmelab/gtd/flows"
@@ -128,7 +128,7 @@ const classify = async (findings: readonly Finding[]) => {
     message: t.qualityTriageMessage(),
     label: "Judging the quality findings",
   })
-  const minP = numeric(vars.qualityTriageMinP, Infinity)
+  const minP = numeric(settings.qualityTriageMinP, Infinity)
   const kind = (f: Finding): FindingKind =>
     truncated.includes(f.id)
       ? "design"

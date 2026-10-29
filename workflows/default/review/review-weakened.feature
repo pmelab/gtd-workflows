@@ -9,7 +9,7 @@ Feature: the review flags an existing scenario that lost an assertion
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "spec/widget.feature" with:
       """
       Feature: Widget

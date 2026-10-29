@@ -7,6 +7,7 @@ import {
   revertScript,
   run,
   start,
+  workflow,
 } from "@pmelab/gtd/flows"
 import { gate } from "../shared/health.js"
 import { naiveTestOn, shipped } from "../shared/options.js"
@@ -135,7 +136,7 @@ export const afterTail = async (first: ReviewOutcome): Promise<void> => {
 }
 
 /** An ordinary start: wait at `idle`, unwind the sketch, check the baseline, then plan and build. */
-export const ordinaryStart = async (): Promise<void> => {
+export const ordinaryStart = workflow(async (): Promise<void> => {
   await human("idle", { message: t.idleMessage(), label: "Idle", file: ".gtd/TODO.md" })
   refusePendingHandOff()
   // Read right after idle, so a bad value refuses the landing that would pin it.
@@ -151,6 +152,6 @@ export const ordinaryStart = async (): Promise<void> => {
   }
   await gate("start-gate", t.startGateBlockedMessage())
   await planAndBuild(start(), stated)
-}
+})
 
 export const feature = shipped(ordinaryStart)

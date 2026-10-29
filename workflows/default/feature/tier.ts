@@ -1,11 +1,11 @@
-import { mark, read, vars } from "@pmelab/gtd/flows"
+import { mark, read, settings } from "@pmelab/gtd/flows"
 import { markFenced } from "../shared/fences.js"
 import { REQUIREMENTS } from "../shared/steps.js"
 
 export type RiskTier = "low" | "high"
 
 /** GTD_FLAG_RISK_TIER: pinned at process start, so a mid-process flip never moves a process. */
-export const riskTierOn = (): boolean => vars.flag_risk_tier === "1"
+export const riskTierOn = (): boolean => settings.flag_risk_tier === "1"
 
 const sectionLines = (
   text: string | undefined,

@@ -11,8 +11,8 @@ Feature: a release flag only when the requirements ask for one
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

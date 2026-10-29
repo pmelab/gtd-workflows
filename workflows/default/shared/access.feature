@@ -7,7 +7,7 @@ Feature: the shipped workflow's scope access holds at landing
 
   Scenario: a review lens that writes src/ is refused at landing
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "owasp-security"
+    And the environment variable "GTD_QUALITYREVIEWS" is "owasp-security"
     And step "fix-precheck" writes ".gtd/FEEDBACK.md" with:
       """
       1 test failed
@@ -50,7 +50,7 @@ Feature: the shipped workflow's scope access holds at landing
         return afterTail(await buildTail(start()))
       }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the ref "refs/tags/base" points at HEAD
     And a file "src/calc.ts" with:
       """

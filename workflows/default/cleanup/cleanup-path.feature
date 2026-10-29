@@ -24,7 +24,7 @@ Feature: cleanup walks one fixed path from the opening commit to idle
       import { cleanup } from "#workflow"
       export { cleanup }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/flags/index.ts" with:
       """
       export const FLAGS = [

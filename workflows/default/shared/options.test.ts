@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest"
 import { FLAGS, type FlagDeclaration } from "./flags.js"
-import { configure, type WorkflowDoors } from "@pmelab/gtd/flows"
+import { testRepo } from "@pmelab/gtd/testkit"
 import * as workflows from "../index.js"
-import * as options from "./options.js"
+import { flagBuild, shippedBuild } from "./options.js"
+import { skills } from "./skills.js"
 
 const { defaults, envDefaults, feature, fix, review, ShippedOptions } = workflows
-const { flagShipped } = options
+const flow = async (): Promise<void> => {}
+const built = shippedBuild(flow)
+
+/** What gtd prints when it loads a config whose default export is `workflow`. */
+const loading = async (workflow: unknown): Promise<string> => {
+  const { stderr } = await testRepo({ workflow: { default: workflow } }).gtd("next")
+  return stderr
+}
 
 describe("the shipped workflow factories", () => {
   it("take exactly the settings the shipped workflows declare as options", () => {
@@ -24,15 +32,12 @@ describe("the shipped workflow factories", () => {
   })
 
   it("declare a seamAllow default a factory option overrides", () => {
-    expect(configure(feature({ seamAllow: "docs/**" }))).toMatchObject({
-      ok: true,
-      build: { defaults: { seamAllow: "docs/**" } },
-    })
+    expect(built({ seamAllow: "docs/**" }).defaults).toMatchObject({ seamAllow: "docs/**" })
   })
 
-  it("refuse the removed flagMode option", () => {
+  it("refuse the removed flagMode option", async () => {
     expect(defaults.flagMode).toBeUndefined()
-    expect(configure(feature({ flagMode: false } as never))).toMatchObject({ ok: false })
+    expect(await loading(feature({ flagMode: false } as never))).toContain('option "flagMode"')
   })
 
   it("declare flag_risk_tier off by default; it is no factory option", () => {
@@ -40,29 +45,23 @@ describe("the shipped workflow factories", () => {
   })
 
   it("lay each option over the shipped setting of its own kind", () => {
-    const result = configure(feature({ qualityReviews: "correctness", testCommand: "npm run ci" }))
-    expect(result).toMatchObject({
-      ok: true,
-      build: {
-        defaults: { ...defaults, qualityReviews: "correctness" },
-        envDefaults: { ...envDefaults, testCommand: "npm run ci" },
-      },
+    expect(built({ qualityReviews: "correctness", testCommand: "npm run ci" })).toMatchObject({
+      defaults: { ...defaults, qualityReviews: "correctness" },
+      envDefaults: { ...envDefaults, testCommand: "npm run ci" },
     })
   })
 
   it("default reviewSeverityMinP to 0.7 and let a factory override win", () => {
     expect(defaults.reviewSeverityMinP).toBe("0.7")
-    expect(configure(feature({ reviewSeverityMinP: "0.9" }))).toMatchObject({
-      ok: true,
-      build: { defaults: { reviewSeverityMinP: "0.9" } },
+    expect(built({ reviewSeverityMinP: "0.9" }).defaults).toMatchObject({
+      reviewSeverityMinP: "0.9",
     })
   })
 
   it("default refactorFlagPattern to GTD_FLAG_ matches and let a factory override win", () => {
     expect(defaults.refactorFlagPattern).toBe("\\bGTD_FLAG_\\w+")
-    expect(configure(feature({ refactorFlagPattern: "\\bFF_\\w+" }))).toMatchObject({
-      ok: true,
-      build: { defaults: { refactorFlagPattern: "\\bFF_\\w+" } },
+    expect(built({ refactorFlagPattern: "\\bFF_\\w+" }).defaults).toMatchObject({
+      refactorFlagPattern: "\\bFF_\\w+",
     })
   })
 
@@ -74,84 +73,75 @@ describe("the shipped workflow factories", () => {
 
   it("default refactorQualityReviews to the three refactor lenses and let a factory option win", () => {
     expect(defaults.refactorQualityReviews).toBe("correctness, ponytail-review, conventions")
-    expect(configure(feature({ refactorQualityReviews: "correctness" }))).toMatchObject({
-      ok: true,
-      build: { defaults: { refactorQualityReviews: "correctness" } },
+    expect(built({ refactorQualityReviews: "correctness" }).defaults).toMatchObject({
+      refactorQualityReviews: "correctness",
     })
-    expect(configure(workflows.rollout({ refactorQualityReviews: "" }))).toMatchObject({
-      ok: true,
-      build: { defaults: { refactorQualityReviews: "" } },
+    expect(flagBuild(flow, "rollout")({ refactorQualityReviews: "" }).defaults).toMatchObject({
+      refactorQualityReviews: "",
     })
   })
 
   it("build the shipped settings unchanged with no options", () => {
-    for (const factory of [feature, fix, review]) {
-      expect(configure(factory)).toMatchObject({ ok: true, build: { defaults, envDefaults } })
-    }
+    expect(built({})).toMatchObject({ defaults, envDefaults })
   })
 
-  it("reject a misspelled option, at the type level and at load, naming the known ones", () => {
+  it("carry the skills, access, steering and summary, so a factory alone is a whole config", async () => {
+    const build = built({})
+    expect(build.skills).toBe(skills)
+    expect(build).toMatchObject({ steering: workflows.steering, summary: workflows.summary })
+    expect(typeof build.access).toBe("function")
+    const repo = testRepo({ workflow: { default: feature() } })
+    expect(await repo.next()).toMatchObject({ idle: true, state: "idle" })
+  })
+
+  it("reject a misspelled option, at the type level and at load, naming the known ones", async () => {
     // @ts-expect-error — `testComand` is no option
-    const configured = feature({ testComand: "npm test" })
-    const result = configure(configured)
-    expect(result).toMatchObject({ ok: false, issues: [{ path: ["testComand"] }] })
-    expect(result?.ok === false && result.issues[0]?.message).toMatch(
-      /^is unexpected, expected: .*"testCommand"/,
+    expect(await loading(feature({ testComand: "npm test" }))).toMatch(
+      /testComand: workflow "default" option "testComand": is unexpected, expected: .*"testCommand"/,
     )
   })
 
-  it("reject a removed option at the type level and at load", () => {
+  it("reject a removed option at the type level and at load", async () => {
     // @ts-expect-error — `model` was never (or is no longer) an option
-    const result = configure(review({ model: "smart" }))
-    expect(result).toMatchObject({ ok: false, issues: [{ path: ["model"] }] })
+    expect(await loading(review({ model: "smart" }))).toContain('option "model": is unexpected')
   })
 
-  it("reject a value of the wrong type at the type level and at load", () => {
+  it("reject a value of the wrong type at the type level and at load", async () => {
     // @ts-expect-error — settings are strings
-    const result = configure(fix({ judgeBudgetBytes: 65536 }))
-    expect(result).toMatchObject({ ok: false, issues: [{ path: ["judgeBudgetBytes"] }] })
+    expect(await loading(fix({ judgeBudgetBytes: 65536 }))).toContain('option "judgeBudgetBytes"')
   })
 
   describe("flagShipped", () => {
-    const factory = flagShipped(async () => {}, "rollout")
-
     it("declare flag and flagRegistry as process settings, so --var flag= is accepted", () => {
-      expect(configure(factory)).toMatchObject({
-        ok: true,
-        build: {
-          defaults: { ...defaults, flag: "", flagRegistry: "src/flags/index.ts" },
-          envDefaults,
-        },
+      expect(flagBuild(flow, "rollout")({})).toMatchObject({
+        defaults: { ...defaults, flag: "", flagRegistry: "src/flags/index.ts" },
+        envDefaults,
       })
     })
 
     it.each(["rollout", "cleanup"] as const)(
       "%s declares one door named after it, with one required flag arg",
-      (name) => {
-        const result = configure(workflows[name]())
-        expect(result).toMatchObject({
-          ok: true,
-          build: { doors: { [name]: { args: [{ name: "flag" }] } } },
-        })
-        const build = (result as { build?: { doors?: WorkflowDoors } }).build
-        expect(Object.keys(build?.doors ?? {})).toEqual([name])
-        expect(build?.doors?.[name]?.vars?.({ flag: "x" })).toEqual({ flag: "x" })
+      async (name) => {
+        const repo = testRepo({ workflow: { default: feature, [name]: workflows[name]() } })
+        const { stdout } = await repo.gtd("doors")
+        expect(stdout).toContain(name)
+        expect(stdout).toContain("<flag>")
       },
     )
 
     it.each(["rollout", "cleanup"] as const)("%s builds one door of that name", (name) => {
-      const result = configure(flagShipped(async () => {}, name))
-      const doors = (result as { build?: { doors?: WorkflowDoors } }).build?.doors
+      const doors = flagBuild(flow, name)({}).doors
       expect(Object.keys(doors ?? {})).toEqual([name])
       expect(doors?.[name]?.args).toEqual([{ name: "flag" }])
       expect(doors?.[name]?.vars?.({ flag: "x" })).toEqual({ flag: "x" })
       expect(doors?.[name]?.vars?.({})).toEqual({ flag: "" })
     })
 
-    it("fail the load on an unknown option", () => {
+    it("fail the load on an unknown option", async () => {
       // @ts-expect-error — `flag` is a --var, not an option
-      const result = configure(factory({ flag: "x" }))
-      expect(result).toMatchObject({ ok: false, issues: [{ path: ["flag"] }] })
+      expect(await loading(workflows.rollout({ flag: "x" }))).toContain(
+        'option "flag": is unexpected',
+      )
     })
   })
 })

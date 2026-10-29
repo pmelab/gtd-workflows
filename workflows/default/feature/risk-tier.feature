@@ -9,12 +9,12 @@ Feature: the risk tier is proposed at triage and recorded behind GTD_FLAG_RISK_T
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
 
   Rule: with GTD_FLAG_RISK_TIER on
 
     Background:
-      Given an environment variable "GTD_FLAG_RISK_TIER" set to "1"
+      Given the environment variable "GTD_FLAG_RISK_TIER" is "1"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -248,7 +248,7 @@ Feature: the risk tier is proposed at triage and recorded behind GTD_FLAG_RISK_T
   Rule: with GTD_FLAG_RISK_TIER off
 
     Background:
-      Given an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+      Given the environment variable "GTD_FLAG_RISK_TIER" is "0"
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b

@@ -3,9 +3,9 @@ Feature: the refactor review's lenses take their model hints from refactorQualit
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness=base"
-    And an environment variable "GTD_REFACTORQUALITYREVIEWS" set to "correctness, conventions=opus"
-    And an environment variable "GTD_FLAG_RISK_TIER" set to "0"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness=base"
+    And the environment variable "GTD_REFACTORQUALITYREVIEWS" is "correctness, conventions=opus"
+    And the environment variable "GTD_FLAG_RISK_TIER" is "0"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

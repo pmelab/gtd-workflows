@@ -20,7 +20,7 @@ Feature: the review gate's contract, and a feedback round's review base
         return afterTail(await buildTail(start()))
       }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the ref "refs/tags/base" points at HEAD
     And a file "src/thing.ts" with:
       """

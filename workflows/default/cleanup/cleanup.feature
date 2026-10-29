@@ -1,6 +1,6 @@
 Feature: cleanup removes a default-on release flag and keeps its flag-on path
 
-  `gtd --workflow cleanup --var flag=<name>` has an agent delete the registry
+  `gtd start cleanup <flag>` has an agent delete the registry
   entry and the off path; checks refuse a surviving entry or env-var reference,
   then the shared health loop and review run; the same checks re-run after every later agent turn. A review note ends the process.
 
@@ -21,7 +21,7 @@ Feature: cleanup removes a default-on release flag and keeps its flag-on path
       import { cleanup } from "#workflow"
       export { cleanup }
       """
-    And an environment variable "GTD_QUALITYREVIEWS" set to ""
+    And the environment variable "GTD_QUALITYREVIEWS" is ""
     And a file "src/flags/index.ts" with:
       """
       export const FLAGS = [

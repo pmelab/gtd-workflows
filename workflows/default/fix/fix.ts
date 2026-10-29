@@ -1,4 +1,4 @@
-import { read, refuse, removeScript, run, scope, start } from "@pmelab/gtd/flows"
+import { read, refuse, removeScript, run, scope, start, workflow } from "@pmelab/gtd/flows"
 import { reviewNotes, reviewRisks } from "@pmelab/gtd/steering"
 import { baseline } from "../shared/health.js"
 import { shipped } from "../shared/options.js"
@@ -37,7 +37,7 @@ export const fixReviewNotes = (): Promise<void> =>
  * Fix what a review handed on, else repair a red baseline — then the
  * hand-off review of the result. A note there is handed to the next `fix`.
  */
-export const fixFlow = async (): Promise<void> => {
+export const fixFlow = workflow(async (): Promise<void> => {
   if (read(REVIEW) !== undefined) {
     await fixReviewNotes()
     return handOffTail(false, start())
@@ -47,6 +47,6 @@ export const fixFlow = async (): Promise<void> => {
   }
   if (await baseline("fix-precheck")) return
   await handOffTail(true, start())
-}
+})
 
 export const fix = shipped(fixFlow, { fix: {} })

@@ -19,7 +19,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
-      And an environment variable "GTD_QUALITYREVIEWS" set to ""
+      And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -187,7 +187,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
         export { summary, steering, skills, access } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
-      And an environment variable "GTD_QUALITYREVIEWS" set to ""
+      And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
         export const add = (a: number, b: number) => a + b
@@ -242,7 +242,7 @@ Feature: a person tries the naive pass by hand before anything builds on it
   Rule: with a naiveTest that is neither true nor false
 
     Background:
-      Given an environment variable "GTD_NAIVETEST" set to "maybe"
+      Given the environment variable "GTD_NAIVETEST" is "maybe"
       And a gtd config with:
         """
         import { feature } from "#workflow/feature"

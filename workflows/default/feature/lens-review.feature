@@ -11,7 +11,7 @@ Feature: the quality lap's findings are triaged, then decided at the finding gat
 
   Background:
     Given the shipped workflows, as gtd install scaffolds them
-    And an environment variable "GTD_QUALITYREVIEWS" set to "correctness"
+    And the environment variable "GTD_QUALITYREVIEWS" is "correctness"
     And a file "src/calc.ts" with:
       """
       export const add = (a: number, b: number) => a + b

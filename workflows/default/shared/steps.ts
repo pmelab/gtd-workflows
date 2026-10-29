@@ -1,4 +1,4 @@
-import { changesSince, env, human, scope, type ScopeAccess } from "@pmelab/gtd/flows"
+import { changesSince, envSettings, human, scope, type ScopeAccess } from "@pmelab/gtd/flows"
 import { removedAssertions, type CollectRound } from "@pmelab/gtd/workflow-kit"
 import * as t from "./text.js"
 
@@ -16,8 +16,8 @@ export const REFACTOR_NOTE = ".gtd/REFACTOR-NOTE.md"
 export const QUALITY = ".gtd/QUALITY.md"
 export const NAIVE_TEST = ".gtd/NAIVE-TEST.md"
 
-export const planner = (): string => env.plannerModel ?? ""
-export const coder = (): string => env.coderModel ?? ""
+export const planner = (): string => envSettings.plannerModel ?? ""
+export const coder = (): string => envSettings.coderModel ?? ""
 
 // ── Keeping the suite green ─────────────────────────────────────────────────
 

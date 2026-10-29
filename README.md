@@ -57,11 +57,15 @@ bin/gtd-wf new mine --from default   # or start an empty directory
 ```
 
 A workflow is a directory with an `index.ts` exporting what a `gtd.config.ts`
-exports: workflow functions or factories, and the reserved exports (`defaults`,
-`summary`, `steering`, …). It imports gtd only through its public subpaths —
-`@pmelab/gtd/flows`, `/wire`, `/steering`, `/workflow-kit`. See gtd's
+exports: workflow factories, plain flows marked with `workflow()`, and the
+reserved exports (`defaults`, `summary`, `steering`, …). A factory's build
+carries its own settings, skills, access, steering files and summary, so
+`export default feature()` alone is a whole config. It imports gtd only through
+its public subpaths — `@pmelab/gtd/flows`, `/wire`, `/steering`, `/workflow-kit`
+— and avoids their `@deprecated` names. See gtd's
 [configuration](https://github.com/pmelab/gtd/blob/main/docs/configuration.md)
-for the shape.
+and
+[workflow kit](https://github.com/pmelab/gtd/blob/main/docs/workflow-kit.md).
 
 To try changes, commit them and pin the working copy's commit:
 
@@ -100,5 +104,8 @@ Given a gtd config with:
   """
 ```
 
-Tests import the testkit through `@support/testkit`, which resolves `#workflow`
-in a config given as source.
+Tests import the testkit through `@support/testkit`, whose `testRepo` passes the
+workflow under test to gtd's as `modules`; scenarios get the same through
+`world.importable()` in a `Before` hook. Steps the scenarios need beyond gtd's
+own live in the workflow's `*.steps.ts`; one gtd also registers is an ambiguous
+step, which quickpickle rejects — delete the copy.
