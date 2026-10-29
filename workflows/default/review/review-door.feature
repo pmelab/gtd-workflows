@@ -43,6 +43,7 @@ Feature: the review door fixes its notes in the same process
       """
     And step "build.review.carrying" runs its script
     And step "build.review.closing" runs its script
+    And step "build.health.check" changes nothing
 
   Scenario: the review is a walkthrough, its summary listing what the finding gate dropped
     When gtd opens door "review" with "HEAD~1"
@@ -82,8 +83,7 @@ Feature: the review door fixes its notes in the same process
     And ".gtd/REVIEW.orig.md" does not exist
 
   Scenario: a nit note is fixed in place, then reviewed again
-    Given step "build.health.check" changes nothing
-    And judge step "build.review.triage" answers:
+    Given judge step "build.review.triage" answers:
       """
       [{"id":"note-1","answer":"nit","p":0.9}]
       """
@@ -110,8 +110,7 @@ Feature: the review door fixes its notes in the same process
     And "src/calc.test.ts" contains "adds"
 
   Scenario: a note asking for a change is fixed in place, then reviewed again
-    Given step "build.health.check" changes nothing
-    And judge step "build.review.triage" answers:
+    Given judge step "build.review.triage" answers:
       """
       [{"id":"note-1","answer":"edit","p":0.9}]
       """
@@ -167,8 +166,7 @@ Feature: the review door fixes its notes in the same process
     Then opening door "review" is refused with ".gtd/REQUIREMENTS.md is left over"
 
   Scenario: a note added with its own boxes is fixed as ticked, never judged
-    Given step "build.health.check" changes nothing
-    And step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
+    Given step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
       """
       export const add = (a: number, b: number): number => a + b
       """

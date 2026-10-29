@@ -96,7 +96,8 @@ and its `*.steps.ts` — so two workflows never share steps.
 
 Drives are strict: a scenario scripts only steps some drive of it reaches
 (checked at the scenario's end; `repo.drive` in code checks after every call),
-and a drive meant to rest at a check step says so
+a Background scripts only steps some scenario of its feature reaches (checked
+at the feature's end), and a drive meant to rest at a check step says so
 (`the process is driven leniently`, or `{ strict: false }` in code).
 
 A test configures the workflow under test with `#workflow` (and

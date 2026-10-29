@@ -71,6 +71,7 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
         renamed to sum
       """
     And step "build.review.carrying" runs its script
+    And step "build.quality.closing" runs its script
 
   Scenario: a design finding and one the fix cap left reach the finding gate, and a ticked one is fixed there
     Given step "build.quality.picking" runs its script
@@ -152,8 +153,7 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
       """
 
   Scenario: a fixed finding and a noise one are listed in the review
-    Given step "build.quality.closing" runs its script
-    And judge step "build.quality.triage" answers:
+    Given judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.9}]
       """
@@ -172,8 +172,7 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
     And ".gtd/REVIEW.md" contains "- sum should be named plus (p=0.9, lens correctness)"
 
   Scenario: a risk the hand-off reviewer marks is fixed and re-reviewed in its own draft, the summary added once
-    Given step "build.quality.closing" runs its script
-    And judge step "build.quality.triage" answers:
+    Given judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.9}]
       """

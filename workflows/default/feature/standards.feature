@@ -67,11 +67,13 @@ Feature: the review learns standards from the human's answers
 
       - [ ] ./src/calc.ts#2-2 — subtract(a, b)
       """
+    And step "build.review.standards.recording" runs its script
+    And step "build.review.standards.raising" runs its script
+    And step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
 
   Scenario: a won't-fix the judge calls reusable is kept, and the review signs off
-    Given step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And judge step "build.review.standards.judge" answers:
+    Given judge step "build.review.standards.judge" answers:
       """
       [{"id":"standard-1","answer":"yes","p":0.9}]
       """
@@ -105,10 +107,7 @@ Feature: the review learns standards from the human's answers
       """
 
   Scenario: the next review lists the standards added
-    Given step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And judge step "build.review.standards.judge" answers:
+    Given judge step "build.review.standards.judge" answers:
       """
       [{"id":"standard-1","answer":"yes","p":0.9}]
       """
@@ -149,8 +148,7 @@ Feature: the review learns standards from the human's answers
       """
 
   Scenario: an answer below the threshold is not kept
-    Given step "build.review.closing" runs its script
-    And judge step "build.review.standards.judge" answers:
+    Given judge step "build.review.standards.judge" answers:
       """
       [{"id":"standard-1","answer":"yes","p":0.6}]
       """
@@ -195,11 +193,7 @@ Feature: the review learns standards from the human's answers
     Then the process rests at "build.review.await-review"
 
   Scenario: a contradicting standard blocks sign-off until the human picks one
-    Given step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And step "build.review.standards.raising" runs its script
-    And a file ".gtd/STANDARDS.md" with:
+    Given a file ".gtd/STANDARDS.md" with:
       """
       # Standards
 
@@ -272,11 +266,7 @@ Feature: the review learns standards from the human's answers
     And ".gtd/STANDARDS.md" does not contain "Undecided"
 
   Scenario: keeping the old standard discards the new one
-    Given step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And step "build.review.standards.raising" runs its script
-    And a file ".gtd/STANDARDS.md" with:
+    Given a file ".gtd/STANDARDS.md" with:
       """
       # Standards
 
@@ -324,11 +314,7 @@ Feature: the review learns standards from the human's answers
     And ".gtd/STANDARDS.md" does not contain "Won't fix"
 
   Scenario: an own answer to a conflict replaces both with its wording
-    Given step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
-    And step "build.review.standards.recording" runs its script
-    And step "build.review.standards.raising" runs its script
-    And a file ".gtd/STANDARDS.md" with:
+    Given a file ".gtd/STANDARDS.md" with:
       """
       # Standards
 
