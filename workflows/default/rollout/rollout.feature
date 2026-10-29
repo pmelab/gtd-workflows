@@ -485,6 +485,8 @@ Feature: rollout turns one release flag default-on and touches nothing else
       """
     And step "rollout.suite.check" changes nothing
     And step "rollout.mentions" runs its script
+    And step "unwind" changes nothing
+    And step "start-gate.check" changes nothing
     When gtd starts workflow "rollout" with "alpha"
     And the process is driven
     Then the process rests at "idle"
@@ -494,8 +496,6 @@ Feature: rollout turns one release flag default-on and touches nothing else
 
       subtract(a, b) returns the difference.
       """
-    Given step "unwind" changes nothing
-    And step "start-gate.check" changes nothing
     When the process is driven
     Then the process rests at "design.triage"
     And ".gtd/FEEDBACK.md" does not exist

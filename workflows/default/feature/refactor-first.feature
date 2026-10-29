@@ -91,6 +91,7 @@ Feature: a refactor-first judgment walks one fixed path to the review gate
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
     And ".gtd/REFACTOR.md" does not exist
@@ -106,7 +107,6 @@ Feature: a refactor-first judgment walks one fixed path to the review gate
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"

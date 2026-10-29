@@ -112,6 +112,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -126,7 +127,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"
@@ -177,6 +177,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -191,7 +192,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"
@@ -222,6 +222,7 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [ ] ./src/calc.ts#1-2
         add built on the shared op
       """
+    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -236,7 +237,6 @@ Feature: refactor-first writes a refactor note, refactors on its own, then rebui
       - [x] ./src/calc.ts#1-2
         add built on the shared op
       """
-    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "implement.building"

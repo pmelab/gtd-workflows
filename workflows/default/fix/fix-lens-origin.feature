@@ -62,6 +62,19 @@ Feature: each finding at the finding gate names the lens that wrote it
       From tests.
       """
     And step "build.quality.gating" runs its script
+    And step "build.quality.closing" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## calc
+
+      - [ ] ./src/calc.ts#1-1
+        renamed to sum
+      """
+    And step "build.review.carrying" runs its script
 
   Scenario: two lenses' findings with one title each name their own lens
     Given judge step "build.quality.triage" answers:
@@ -89,19 +102,6 @@ Feature: each finding at the finding gate names the lens that wrote it
 
       - [ ] fix
       """
-    Given step "build.quality.closing" runs its script
-    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
-      """
-      # Review: abc1234
-
-      <!-- base: 0000000 -->
-
-      ## calc
-
-      - [ ] ./src/calc.ts#1-1
-        renamed to sum
-      """
-    And step "build.review.carrying" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"

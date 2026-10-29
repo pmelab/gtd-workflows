@@ -55,7 +55,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
     And landing is refused with "src/calc.ts:1"
 
   Scenario: a hand-edit from an earlier reply round is reverted by the re-unwind, back to its reviewed content
-    Given a file ".gtd/REVIEW.md" with:
+    Given step "build.review.closing" runs its script
+    And a file ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
 
@@ -95,6 +96,7 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
           - H: why not multiply?
           - A: this is the addition helper.
       """
+    And step "re-unwind" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -109,8 +111,6 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       - [ ] ./src/calc.ts#1-1
         new add function
       """
-    And step "build.review.closing" runs its script
-    And step "re-unwind" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "feedback.fixing"
@@ -138,7 +138,8 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
     And the resting step's content does not contain "diff --git"
 
   Scenario: folds from an in-loop collect survive a judged-approving last round
-    Given a file ".gtd/REVIEW.md" with:
+    Given step "build.review.closing" runs its script
+    And a file ".gtd/REVIEW.md" with:
       """
       # Review: abc1234
 
@@ -194,8 +195,6 @@ Feature: a question at the review gate gets an answer at the same gate, not a la
       """
       [{"id":"note-1","answer":"praise","p":0.99}]
       """
-    Given step "build.review.carrying" runs its script
-    And step "build.review.closing" runs its script
     When gtd lands
     And the process is driven leniently
     Then the process rests at "re-unwind"

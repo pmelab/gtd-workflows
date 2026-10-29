@@ -59,9 +59,22 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
       """
     And step "build.quality.sorting" runs its script
     And step "build.quality.gating" runs its script
+    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
+      """
+      # Review: abc1234
+
+      <!-- base: 0000000 -->
+
+      ## calc
+
+      - [ ] ./src/calc.ts#1-1
+        renamed to sum
+      """
+    And step "build.review.carrying" runs its script
 
   Scenario: a design finding and one the fix cap left reach the finding gate, and a ticked one is fixed there
-    Given judge step "build.quality.triage" answers:
+    Given step "build.quality.picking" runs its script
+    And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"design","p":0.9}]
       """
@@ -111,19 +124,6 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
       export const plus = (a: number, b: number) => a + b
       """
     And step "build.fix.quality.fixing" deletes ".gtd/QUALITY.md"
-    Given step "build.quality.picking" runs its script
-    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
-      """
-      # Review: abc1234
-
-      <!-- base: 0000000 -->
-
-      ## calc
-
-      - [ ] ./src/calc.ts#1-1
-        renamed to sum
-      """
-    And step "build.review.carrying" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.await-review"
@@ -153,18 +153,6 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
 
   Scenario: a fixed finding and a noise one are listed in the review
     Given step "build.quality.closing" runs its script
-    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
-      """
-      # Review: abc1234
-
-      <!-- base: 0000000 -->
-
-      ## calc
-
-      - [ ] ./src/calc.ts#1-1
-        renamed to sum
-      """
-    And step "build.review.carrying" runs its script
     And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.9}]
@@ -185,17 +173,6 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
 
   Scenario: a risk the hand-off reviewer marks is fixed and re-reviewed in its own draft, the summary added once
     Given step "build.quality.closing" runs its script
-    And step "build.review.reviewing" writes ".gtd/REVIEW.md" with:
-      """
-      # Review: abc1234
-
-      <!-- base: 0000000 -->
-
-      ## calc
-
-      - [ ] ./src/calc.ts#1-1
-        renamed to sum
-      """
     And judge step "build.quality.triage" answers:
       """
       [{"id":"Q1","answer":"mechanical","p":0.9},{"id":"Q2","answer":"noise","p":0.9}]
@@ -220,7 +197,6 @@ Feature: fix's quality lap is triaged, and its leftovers are decided at the find
     Given step "build.review.reviewing" is no longer scripted
     And step "build.review.reviewing" replaces the text "Risk: overflows on large numbers" in ".gtd/REVIEW.md" with "sum, now guarded"
     And step "build.review.fix.risks.fixing" changes nothing
-    And step "build.review.carrying" runs its script
     When the process is driven
     Then the process rests at "build.review.await-review"
     And ".gtd/REVIEW.md" contains "sum, now guarded"

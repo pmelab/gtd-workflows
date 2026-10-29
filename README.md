@@ -94,9 +94,10 @@ a dev dependency: they drive gtd's real engine in memory against the workflow.
 Each workflow is its own vitest project — its `*.test.ts`, its `.feature` files
 and its `*.steps.ts` — so two workflows never share steps.
 
-Drives are strict: a scenario scripts a step only once a drive reaches it, and a
-drive meant to rest at a check step says so (`the process is driven leniently`,
-or `{ strict: false }` in code).
+Drives are strict: a scenario scripts only steps some drive of it reaches
+(checked at the scenario's end; `repo.drive` in code checks after every call),
+and a drive meant to rest at a check step says so
+(`the process is driven leniently`, or `{ strict: false }` in code).
 
 A test configures the workflow under test with `#workflow` (and
 `#workflow/feature`, `#workflow/review` … for its subdirectories), which

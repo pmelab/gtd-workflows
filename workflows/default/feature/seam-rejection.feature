@@ -58,6 +58,8 @@ Feature: rejected naive passes walk one fixed path through the steer gate to the
       """
       export const add = (a: number, b: number) => b + a
       """
+    And step "implement.health.check" changes nothing
+    And step "implement.closing" runs its script
     When the process is driven
     Then the process rests at "seam.judge"
 
@@ -108,8 +110,6 @@ Feature: rejected naive passes walk one fixed path through the steer gate to the
       [{"id":"shape","answer":"land","p":0.9}]
       """
     And step "implement.applying" runs its script
-    Given step "implement.health.check" changes nothing
-    And step "implement.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.review.reviewing"

@@ -88,6 +88,7 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       - [ ] ./src/calc.ts#1-2
         subtract next to add
       """
+    And step "refactor.build.review.closing" runs its script
     When the process is driven
     Then the process rests at "refactor.build.review.await-review"
 
@@ -108,7 +109,6 @@ Feature: a refactor that carried the whole feature still gets a quality lap over
       """
     And step "implement.health.check" changes nothing
     And step "implement.closing" runs its script
-    And step "refactor.build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "build.quality.correctness.reviewing"

@@ -42,6 +42,7 @@ Feature: the review door fixes its notes in the same process
       - [ ] ./src/calc.ts#1-1 — add(a, b)
       """
     And step "build.review.carrying" runs its script
+    And step "build.review.closing" runs its script
 
   Scenario: the review is a walkthrough, its summary listing what the finding gate dropped
     When gtd opens door "review" with "HEAD~1"
@@ -74,7 +75,6 @@ Feature: the review door fixes its notes in the same process
       - add has no test (lens correctness)
       """
     And ".gtd/REVIEW.md" does not contain "Tick exactly one:"
-    And step "build.review.closing" runs its script
     When gtd lands
     And the process is driven
     Then the process rests at "idle"
@@ -82,11 +82,8 @@ Feature: the review door fixes its notes in the same process
     And ".gtd/REVIEW.orig.md" does not exist
 
   Scenario: a nit note is fixed in place, then reviewed again
-    When gtd opens door "review" with "HEAD~1"
-    And the process is driven
-    And the text "— add(a, b)" in ".gtd/REVIEW.md" is replaced with "— add(a, b) — add a test for it"
-    And gtd lands
-    Given judge step "build.review.triage" answers:
+    Given step "build.health.check" changes nothing
+    And judge step "build.review.triage" answers:
       """
       [{"id":"note-1","answer":"nit","p":0.9}]
       """
@@ -94,9 +91,11 @@ Feature: the review door fixes its notes in the same process
       """
       it("adds", () => {})
       """
-    Given step "build.health.check" changes nothing
-    And step "build.review.closing" runs its script
-    When the process is driven
+    When gtd opens door "review" with "HEAD~1"
+    And the process is driven
+    And the text "— add(a, b)" in ".gtd/REVIEW.md" is replaced with "— add(a, b) — add a test for it"
+    And gtd lands
+    And the process is driven
     Then the process rests at "build.review.await-review"
     And the commit subjects end with:
       """
@@ -111,11 +110,8 @@ Feature: the review door fixes its notes in the same process
     And "src/calc.test.ts" contains "adds"
 
   Scenario: a note asking for a change is fixed in place, then reviewed again
-    When gtd opens door "review" with "HEAD~1"
-    And the process is driven
-    And the text "— add(a, b)" in ".gtd/REVIEW.md" is replaced with "— add(a, b) — test negatives too"
-    And gtd lands
-    Given judge step "build.review.triage" answers:
+    Given step "build.health.check" changes nothing
+    And judge step "build.review.triage" answers:
       """
       [{"id":"note-1","answer":"edit","p":0.9}]
       """
@@ -134,9 +130,11 @@ Feature: the review door fixes its notes in the same process
       """
     And step "re-unwind" runs its script
     And step "feedback.closing" runs its script
-    Given step "build.health.check" changes nothing
-    And step "build.review.closing" runs its script
-    When the process is driven
+    When gtd opens door "review" with "HEAD~1"
+    And the process is driven
+    And the text "— add(a, b)" in ".gtd/REVIEW.md" is replaced with "— add(a, b) — test negatives too"
+    And gtd lands
+    And the process is driven
     Then the process rests at "build.review.await-review"
     And the commit subjects end with:
       """
@@ -169,6 +167,11 @@ Feature: the review door fixes its notes in the same process
     Then opening door "review" is refused with ".gtd/REQUIREMENTS.md is left over"
 
   Scenario: a note added with its own boxes is fixed as ticked, never judged
+    Given step "build.health.check" changes nothing
+    And step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
+      """
+      export const add = (a: number, b: number): number => a + b
+      """
     When gtd opens door "review" with "HEAD~1"
     And the process is driven
     And text is appended to ".gtd/REVIEW.md":
@@ -184,13 +187,7 @@ Feature: the review door fixes its notes in the same process
       - [ ] _your answer_
       """
     And gtd lands
-    Given step "build.review.fix.nits.fixing" writes "src/calc.ts" with:
-      """
-      export const add = (a: number, b: number): number => a + b
-      """
-    Given step "build.health.check" changes nothing
-    And step "build.review.closing" runs its script
-    When the process is driven
+    And the process is driven
     Then the process rests at "build.review.await-review"
     And the commit subjects end with:
       """

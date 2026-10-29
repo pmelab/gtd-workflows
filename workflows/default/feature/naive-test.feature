@@ -71,9 +71,9 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: a clean landing signs the pass off, takes it out and lands it as the implementation
+      Given step "seam.restoring" runs its script
       When the process is driven
       Then the process rests at "seam.try"
-      Given step "seam.restoring" runs its script
       When gtd lands
       And step "implement.applying" runs its script
       And step "implement.health.check" changes nothing
@@ -92,7 +92,8 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: notes and a code edit send the pass back, out of the tree, to a naive pass that reads both
-      Given step "seam.naive", when prompted with "> subtract(5, 3) printed 8, not 2.", writes "notes-read.txt" with:
+      Given step "seam.restoring" runs its script
+      And step "seam.naive", when prompted with "> subtract(5, 3) printed 8, not 2.", writes "notes-read.txt" with:
         """
         read
         """
@@ -115,7 +116,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
         export const hint = "subtract, not add"
         """
-      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
@@ -134,7 +134,8 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
 
     Scenario: notes alone send the pass back with no edits to read
-      Given step "seam.naive", when prompted with "They edited the code", writes "edits-read.txt" with:
+      Given step "seam.restoring" runs its script
+      And step "seam.naive", when prompted with "They edited the code", writes "edits-read.txt" with:
         """
         read
         """
@@ -144,13 +145,13 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
         subtract adds.
         """
-      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
       And "edits-read.txt" does not exist
 
     Scenario: a requirements edit at seam.try stays, and sends the pass back
+      Given step "seam.restoring" runs its script
       When the process is driven
       Then the process rests at "seam.try"
       Given a file ".gtd/REQUIREMENTS.md" with:
@@ -166,7 +167,6 @@ Feature: a person tries the naive pass by hand before anything builds on it
         - AC-1: subtract(a, b) returns a - b.
         - AC-2: subtract(a, b) rejects NaN.
         """
-      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.try"
@@ -230,12 +230,12 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
       And step "seam.check" changes nothing
       And step "seam.applying" runs its script
+      And step "seam.restoring" runs its script
 
     Scenario: the person tries the pass before the seam judge rules
       When the process is driven
       Then the process rests at "seam.try"
       And the resting step's content contains "the seam judge rules on its shape"
-      Given step "seam.restoring" runs its script
       When gtd lands
       And the process is driven
       Then the process rests at "seam.judge"
