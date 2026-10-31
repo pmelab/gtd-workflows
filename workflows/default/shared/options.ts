@@ -23,6 +23,7 @@ export const ShippedOptions = Schema.Struct({
   reviewNoteActionable: setting,
   reviewSeverityMinP: setting,
   qualityTriageMinP: setting,
+  criteriaQualityMinP: setting,
   standardMinP: setting,
   refactorFlagPattern: setting,
   seamAllow: setting,

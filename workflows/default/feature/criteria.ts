@@ -3,11 +3,14 @@ import {
   changes,
   head,
   judge,
+  mark,
+  numeric,
   read,
   refuse,
   requireProgress,
   run,
   scope,
+  settings,
   type Change,
 } from "@pmelab/gtd/flows"
 import { HEADING, ITEM, markFenced } from "../shared/fences.js"
@@ -265,3 +268,47 @@ export const skipDesign = (stated: StatedCriteria | undefined): Promise<boolean>
         await impact()
         return true
       })
+
+/** GTD_FLAG_CRITERIA_QUALITY: a judge rates every criterion after each triage round. */
+export const criteriaQualityOn = (): boolean => settings.flag_criteria_quality === "1"
+
+const REJECTIONS = ["internal", "existing", "upstream", "exact", "tier", "negative"] as const
+
+/**
+ * The criteria in `file` the judge rejects at `criteriaQualityMinP` or above;
+ * `exempt` IDs are not asked. Below the bar, or cut by the budget, a criterion is kept.
+ */
+export const judgeCriteria = async (
+  file: string,
+  exempt: ReadonlySet<string>,
+): Promise<readonly t.RejectedCriterion[]> => {
+  const text = read(file) ?? ""
+  const asked = (criteriaOf(text) ?? []).filter((c) => c.id !== "" && !exempt.has(c.id))
+  if (asked.length === 0) return []
+  const { answers, truncated } = await judge("criteria", {
+    questions: asked.map(t.criterionQualityQuestion),
+    evidence: { requirements: text, ...Object.fromEntries(asked.map((c) => [c.id, c.text])) },
+    message: t.criteriaQualityMessage(),
+    label: "Judging the acceptance criteria",
+  })
+  const minP = numeric(settings.criteriaQualityMinP, Infinity)
+  return asked.flatMap((c) => {
+    if (truncated.includes(c.id)) return []
+    const verdict = REJECTIONS.find((v) => answered(answers[c.id], v, minP))
+    return verdict === undefined ? [] : [{ ...c, verdict }]
+  })
+}
+
+/** Add to `kept` each of `flagged` the human left word for word at the gate: an ordinary criterion from now on. */
+export const keepUnchanged = (
+  file: string,
+  flagged: readonly t.RejectedCriterion[],
+  kept: Set<string>,
+): void => {
+  const listed = criteriaOf(read(file) ?? "") ?? []
+  for (const f of flagged) {
+    if (!listed.some((c) => c.id === f.id && c.text === f.text)) continue
+    kept.add(f.id)
+    mark("criterion-kept", `${f.id} ${f.verdict}`)
+  }
+}

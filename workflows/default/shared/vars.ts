@@ -24,6 +24,9 @@ export const defaults: Readonly<Record<string, string>> = {
   reviewNoteActionable: "0.7",
   reviewSeverityMinP: "0.7",
   qualityTriageMinP: "0.7",
+  // Calibrated on 93 real criteria: at 0.5 the judge flags restated guarantees and test-tier
+  // mandates; below it sit legitimate flag-off behaviours.
+  criteriaQualityMinP: "0.5",
   // How sure the judge must be that an answer at the review gate is a reusable standard.
   standardMinP: "0.8",
   refactorFlagPattern: "\\bGTD_FLAG_\\w+",
@@ -32,6 +35,8 @@ export const defaults: Readonly<Record<string, string>> = {
   naiveTest: "false",
   // GTD_FLAG_RISK_TIER, recorded at process start; only "1" is on.
   flag_risk_tier: "0",
+  // GTD_FLAG_CRITERIA_QUALITY, recorded at process start; only "1" is on.
+  flag_criteria_quality: "0",
   // Decides the turn count: one `build.quality.<lens>` scope per entry, each
   // keyed in `./skills.ts`.
   qualityReviews:

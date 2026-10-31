@@ -34,9 +34,10 @@ where each open lens finding, and each one the judge called noise, is ticked
 triage (taken by `design.triage`; `quality.triage`/`review.triage` are judges)
 
 **Acceptance criterion**: One `- AC-<n>: …` line under `## Acceptance Criteria`
-in `.gtd/REQUIREMENTS.md` — a checkable statement the build must make true. A
-lap keeps the IDs the file already holds; only a design lap changes the list.
-_Avoid_: requirement (the whole file), story, done-when
+in `.gtd/REQUIREMENTS.md` — a checkable statement of observable behaviour the
+build must make true, never how it is built. A lap keeps the IDs the file
+already holds; only a design lap changes the list. _Avoid_: requirement (the
+whole file), story, done-when
 
 **Naive pass**: The `seam.naive` turn: the requirements implemented directly,
 kept as a
