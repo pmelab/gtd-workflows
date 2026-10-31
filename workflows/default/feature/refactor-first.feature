@@ -9,6 +9,14 @@ Feature: a refactor-first judgment walks one fixed path to the review gate
 
   Background:
     Given the shipped workflows, as gtd-wf config prints them
+    And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+      """
+    And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9}]
+      """
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_REFACTORQUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
@@ -133,7 +141,8 @@ Feature: a refactor-first judgment walks one fixed path to the review gate
       gtd(human): idle → unwind
       gtd(check): unwind → start-gate.check
       gtd(check): start-gate.check → design.triage
-      gtd(agent): design.triage → design.gate.answer
+      gtd(agent): design.triage → design.criteria
+      gtd(judge): design.criteria → design.gate.answer
       gtd(human): design.gate.answer → seam.naive
       gtd(agent): seam.naive → seam.check
       gtd(check): seam.check → seam.judge

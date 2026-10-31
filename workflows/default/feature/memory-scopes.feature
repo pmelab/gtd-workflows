@@ -7,6 +7,14 @@ Feature: each phase of the shipped workflow is its own conversation
 
   Scenario: design and seam are separate conversations
     Given the shipped workflows, as gtd-wf config prints them
+    And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+      """
+    And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9}]
+      """
     And a file "NOTE.md" with:
       """
       a sketch

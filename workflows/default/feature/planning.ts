@@ -9,13 +9,7 @@ import {
 } from "@pmelab/gtd/flows"
 import { REQUIREMENTS } from "../shared/steps.js"
 import type { RejectedCriterion } from "../shared/text.js"
-import {
-  criteriaQualityOn,
-  judgeCriteria,
-  keepUnchanged,
-  requireCriteria,
-  requireImpact,
-} from "./criteria.js"
+import { judgeCriteria, keepUnchanged, requireCriteria, requireImpact } from "./criteria.js"
 import { requireReleaseFlag } from "./release-flag.js"
 import { answerProductQuestions, triage } from "./steps.js"
 
@@ -53,7 +47,6 @@ const triageRound = async (
     requireImpact(REQUIREMENTS)
     requireReleaseFlag(REQUIREMENTS)
     guard?.()
-    if (!criteriaQualityOn()) return []
     rejected = await judgeCriteria(REQUIREMENTS, kept)
     if (rejected.length === 0 || retry === RETRIES) return rejected
   }

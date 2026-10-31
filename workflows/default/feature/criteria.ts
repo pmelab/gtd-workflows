@@ -269,9 +269,6 @@ export const skipDesign = (stated: StatedCriteria | undefined): Promise<boolean>
         return true
       })
 
-/** GTD_FLAG_CRITERIA_QUALITY: a judge rates every criterion after each triage round. */
-export const criteriaQualityOn = (): boolean => settings.flag_criteria_quality === "1"
-
 const REJECTIONS = ["internal", "existing", "upstream", "exact", "tier", "negative"] as const
 
 /**

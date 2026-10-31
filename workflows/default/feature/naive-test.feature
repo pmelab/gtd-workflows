@@ -18,6 +18,14 @@ Feature: a person tries the naive pass by hand before anything builds on it
         import { feature } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
+      And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+        """
+      And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9}]
+        """
       And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
@@ -188,6 +196,14 @@ Feature: a person tries the naive pass by hand before anything builds on it
         import { feature } from "#workflow/feature"
         export default feature({ naiveTest: true })
         """
+      And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+        """
+      And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9}]
+        """
       And the environment variable "GTD_QUALITYREVIEWS" is ""
       And a file "src/calc.ts" with:
         """
@@ -248,6 +264,14 @@ Feature: a person tries the naive pass by hand before anything builds on it
         """
         import { feature } from "#workflow/feature"
         export default feature()
+        """
+      And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+        """
+      And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+        """
+        [{"id":"AC-1","answer":"keep","p":0.9}]
         """
       And a file "src/calc.ts" with:
         """

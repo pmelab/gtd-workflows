@@ -117,6 +117,7 @@ describe("afterTail feedback lap", () => {
         ".gtd/REQUIREMENTS.md",
         "# Requirements\n\n- multiply, designed\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
       ),
+    "design.criteria": () => '[{"id":"AC-1","answer":"keep","p":0.9}]',
     "design.gate.answer": () => undefined,
   }
 
@@ -150,7 +151,13 @@ describe("an in-flight 28.0.0 naive-pass process", () => {
     ["human", "build.review.await-review", "build.review.closing"],
     ["check", "build.review.closing", "re-unwind"],
     ["check", "re-unwind", "design.triage"],
-    ["agent", "design.triage", "design.gate.answer"],
+    ["agent", "design.triage", "design.criteria"],
+    [
+      "judge",
+      "design.criteria",
+      "design.gate.answer",
+      'Gtd-Judge: {"id":"AC-1","answer":"keep","p":0.9}',
+    ],
     ["human", "design.gate.answer", "implement.building"],
   ]
   const trails: Record<string, readonly Edge[]> = {
@@ -217,6 +224,7 @@ describe("an in-flight 28.0.0 naive-pass process", () => {
             ".gtd/REQUIREMENTS.md",
             "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
           ),
+        "design.criteria": () => '[{"id":"AC-1","answer":"keep","p":0.9}]',
         "design.gate.answer": () => undefined,
         "seam.naive": (_, r) => {
           r.write("src/calc.ts", `${CALC}// naive\n`)
@@ -230,6 +238,7 @@ describe("an in-flight 28.0.0 naive-pass process", () => {
     const seen: Record<string, number> = {
       "seam.naive": 1,
       "design.triage": 1,
+      "design.criteria": 1,
       "design.gate.answer": 1,
     }
     for (const [actor, from, to, trailer] of trail.slice(0, upTo)) {
@@ -290,11 +299,10 @@ describe("an in-flight process from before the architecture path was removed", (
     return repo
   }
 
-  it("resting at the design gate, replays onto the naive pass", async () => {
+  // design.criteria now follows every triage turn, so no rest past one replays.
+  it("resting at the design gate, fails replay", async () => {
     const repo = await atDesignGate()
-    expect((await repo.next()).state).toBe("design.gate.answer")
-    await repo.land()
-    expect((await repo.next()).state).toBe("seam.naive")
+    await expect(repo.next()).rejects.toThrow("the workflow changed under this process")
   })
 
   it("past the design gate on the architecture path, fails replay", async () => {
@@ -321,6 +329,7 @@ describe("release flag", () => {
             ".gtd/REQUIREMENTS.md",
             "# Requirements\n\n## Concerns\n\n### S\n\n- `s`\n\n## Impact\n\n- the module\n\n## Acceptance Criteria\n\n- AC-1: done\n",
           ),
+        "design.criteria": () => '[{"id":"AC-1","answer":"keep","p":0.9}]',
         "design.gate.answer": () => undefined,
         "seam.naive": (_, r) => {
           r.write("src/calc.ts", `${CALC}// naive\n`)

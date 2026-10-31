@@ -1,5 +1,5 @@
 @inmem
-Feature: with GTD_FLAG_CRITERIA_QUALITY, a judge rejects criteria that are not observable behaviour
+Feature: a judge rejects criteria that are not observable behaviour
 
   After every `design.triage` round `design.criteria` rates each acceptance
   criterion: `keep`, or a rejection (`internal`, `existing`, `upstream`,
@@ -13,7 +13,6 @@ Feature: with GTD_FLAG_CRITERIA_QUALITY, a judge rejects criteria that are not o
     Given the shipped workflows, as gtd-wf config prints them
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the environment variable "GTD_FLAG_RISK_TIER" is "0"
-    And the environment variable "GTD_FLAG_CRITERIA_QUALITY" is "1"
     And a file "src/greeting.ts" with:
       """
       export const greeting = "Helo, world"

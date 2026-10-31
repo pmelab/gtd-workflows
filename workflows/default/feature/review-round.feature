@@ -23,6 +23,14 @@ Feature: the review gate's contract, and a feedback round's review base
         { ...workflowOptions, base: (_workflow, vars) => vars.reviewBase ?? "" },
       )
       """
+    And judge step "design.criteria", when its questions contain "criterion AC-2,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9},{"id":"AC-2","answer":"keep","p":0.9}]
+      """
+    And judge step "design.criteria", when its questions contain "criterion AC-1,", answers:
+      """
+      [{"id":"AC-1","answer":"keep","p":0.9}]
+      """
     And the environment variable "GTD_QUALITYREVIEWS" is ""
     And the ref "refs/tags/base" points at HEAD
     And a file "src/thing.ts" with:

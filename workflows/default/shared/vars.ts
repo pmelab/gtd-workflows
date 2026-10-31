@@ -35,8 +35,6 @@ export const defaults: Readonly<Record<string, string>> = {
   naiveTest: "false",
   // GTD_FLAG_RISK_TIER, recorded at process start; only "1" is on.
   flag_risk_tier: "0",
-  // GTD_FLAG_CRITERIA_QUALITY, recorded at process start; only "1" is on.
-  flag_criteria_quality: "0",
   // Decides the turn count: one `build.quality.<lens>` scope per entry, each
   // keyed in `./skills.ts`.
   qualityReviews:

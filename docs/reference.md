@@ -302,18 +302,20 @@ re-reads them from the file.
   else, including one vague criterion, falls back to `design.triage`. A sketch
   with no such list skips the judge. With `GTD_FLAG_RISK_TIER` on there is no
   skip path: the tier is proposed at triage and set at the design gate.
-- **Criteria judge (`GTD_FLAG_CRITERIA_QUALITY=1`, off by default).** After
-  every full-path triage turn, `design.criteria` rates each criterion `keep` or
-  rejects it as `internal`, `existing`, `upstream`, `exact`, `tier` or
-  `negative`. A rejection at [`criteriaQualityMinP`](#settings) or above sends
-  the criterion, with its reason, back to `design.triage`, at most twice per
-  round; a retry may change nothing when the planner holds the judge wrong.
-  Whatever the judge still rejects is listed at `design.gate.answer`: leave a
-  flagged criterion word for word to keep it as an ordinary criterion (it lands
+- **Criteria judge.** After every full-path triage turn, `design.criteria` rates
+  each criterion `keep` or rejects it as `internal`, `existing`, `upstream`,
+  `exact`, `tier` or `negative`. A rejection at
+  [`criteriaQualityMinP`](#settings) or above sends the criterion, with its
+  reason, back to `design.triage`, at most twice per round; a retry may change
+  nothing when the planner holds the judge wrong. Whatever the judge still
+  rejects is listed at `design.gate.answer`: leave a flagged criterion word for
+  word to keep it as an ordinary criterion (it lands
   `Gtd-Mark: criterion-kept=<id> <verdict>` and is not judged again in that
   design), reword it, or move the fact under `## Impact`. A missing verdict, or
   a criterion the judge's budget cut, is kept. The skip path runs no criteria
-  judge.
+  judge. **Upgrading:** finish or `gtd abandon` any process that has landed a
+  `design.triage` turn: replay now expects `design.criteria` after it. One
+  resting at `design.triage` or earlier keeps replaying.
 - **Frozen.** After design only another design lap (review feedback) changes
   them: `gtd land` refuses an `implement.building` or
   `implement.fix.suite.fixing` turn that edits them (`criteria-frozen`).
@@ -979,7 +981,6 @@ that reflows the steering file changes which branch the flow takes next.
   [learned standards](#learned-standards).
 - **`criteriaQualityMinP`** (`0.5`) — the floor a rejection at `design.criteria`
   must clear to send a criterion back to triage; below it the criterion is kept.
-  Only read with `GTD_FLAG_CRITERIA_QUALITY` on.
 - **`qualityTriageMinP`** (`0.7`) — the floor a `mechanical` or `noise` verdict
   on a quality finding must clear at `build.quality.triage` (and
   `refactor.build.quality.triage`). Below it, the finding is `design` and
@@ -1013,11 +1014,6 @@ that reflows the steering file changes which branch the flow takes next.
   Not a factory option; `--var flag_risk_tier=1` is the only override. Off, no
   tier is asked for and no commit carries a `Gtd-Mark:`. See
   [the naive-pass path](#the-naive-pass-path).
-- **`flag_criteria_quality`** (`0`) — this workflow's own release flag: `1` when
-  `GTD_FLAG_CRITERIA_QUALITY` is on, recorded at process start. Not a factory
-  option; `--var flag_criteria_quality=1` is the only override. On, a judge
-  rates every acceptance criterion after each triage turn (see
-  [Acceptance criteria](#acceptance-criteria)).
 - **`judgeBudgetBytes`** (`32768`) — the total byte budget split across one
   judge step's evidence keys. Must be a positive integer; blank, zero, negative
   or fractional values fail the step rather than disabling the bound.

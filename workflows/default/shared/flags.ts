@@ -4,7 +4,4 @@ export interface FlagDeclaration {
   readonly defaultOn?: boolean
 }
 
-export const FLAGS: readonly FlagDeclaration[] = [
-  { name: "risk_tier" },
-  { name: "criteria_quality" },
-]
+export const FLAGS: readonly FlagDeclaration[] = [{ name: "risk_tier" }]

@@ -252,12 +252,11 @@ named one; without it, no seam judge or refactor runs and the naive pass lands
 as the implementation, straight through the health loop and the quality lap. See
 [Release flags](./reference.md#release-flags).
 
-**Criteria judge (flag `GTD_FLAG_CRITERIA_QUALITY=1`, off by default).** After
-each triage turn a judge rejects acceptance criteria that are not observable
-behaviour — internals, restated existing guarantees, upstream behaviour, exact
-values, test-tier mandates, negative claims — and sends them back to triage, at
-most twice. What it still rejects is listed at the design gate; leave a
-criterion unchanged there to keep it. See
+**Criteria judge.** After each triage turn a judge rejects acceptance criteria
+that are not observable behaviour — internals, restated existing guarantees,
+upstream behaviour, exact values, test-tier mandates, negative claims — and
+sends them back to triage, at most twice. What it still rejects is listed at the
+design gate; leave a criterion unchanged there to keep it. See
 [Acceptance criteria](./reference.md#acceptance-criteria).
 
 **Risk tier (flag `GTD_FLAG_RISK_TIER=1`, off by default).** Triage proposes a
